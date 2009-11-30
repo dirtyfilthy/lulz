@@ -1,0 +1,12 @@
+#!/bin/sh
+TMP=`tempfile`
+DATE=`date +%Y%m%d%H%M`
+cd $(dirname $0)/../..
+if ! [ -d lulz/packages ]; then
+   mkdir lulz/packages
+fi;
+echo .git >> $TMP
+echo packages >> $TMP
+cat $TMP
+tar --exclude-from=$TMP -zcvf lulz/packages/lulz-$DATE.tgz  lulz
+rm $TMP

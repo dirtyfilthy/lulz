@@ -1,0 +1,15 @@
+module Lulz
+	class EmailAddress < Datatype
+
+		attr_accessor :address
+		
+		def is_googlable?
+			true
+		end
+
+		def google_keywords
+			address.gsub("."," ")
+		end
+
+	end
+end

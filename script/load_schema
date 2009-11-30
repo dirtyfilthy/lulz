@@ -1,0 +1,8 @@
+echo "Warning! This will wipe your db, type 'yes' to continue."
+echo -n "yes? "
+read CONFIRM
+if [ "$CONFIRM" != "yes" ]; then echo "Exiting..."; exit 1; fi
+
+cd $(dirname $0)/../db
+rm -f lulz.sqlite3
+sqlite3 lulz.sqlite3 < schema.sql

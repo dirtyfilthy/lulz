@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/lulz2/!svn/ver/5/base/datatypes
+END
+profile.rb
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/lulz2/!svn/ver/5/base/datatypes/profile.rb
+END
+person.rb
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/lulz2/!svn/ver/5/base/datatypes/person.rb
+END
+email_address.rb
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/lulz2/!svn/ver/4/base/datatypes/email_address.rb
+END

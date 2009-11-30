@@ -1,0 +1,18 @@
+--- 
+:threads: 16
+:search_threshold: 0.2
+:match_threshold: 0.5
+:graph_cutoff: 0.3
+:disabled_agents: 
+  - LinkedinDirectoryAgent
+:timeout: 0
+:summary: false
+:fast_search_settings:
+  :search_threshold: 0.4
+  :graph_cutoff: 0.4
+  :match_threshold: 0.5
+  :timeout: 300
+  :summary: true
+:match_mode_settings:
+  :search_threshold: 0.2
+  :match_threshold: 0.0

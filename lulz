@@ -1,0 +1,6 @@
+#!/usr/bin/ruby1.8
+LULZ_DIR = File.dirname($0)
+module Lulz
+USE_CLI=true
+end
+require "#{LULZ_DIR}/boot/init.rb"

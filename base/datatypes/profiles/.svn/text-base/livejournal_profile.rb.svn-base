@@ -1,0 +1,5 @@
+module Lulz
+	class LivejournalProfile < Profile
+		attr_accessor :html_page	
+	end
+end

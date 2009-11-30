@@ -1,0 +1,6 @@
+module Lulz
+	class FoafProfile < Profile
+		attr_accessor :url
+	
+	end
+end

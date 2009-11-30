@@ -1,0 +1,14 @@
+module Lulz
+	class Profile < Datatype
+		
+		@children=[]
+	
+		def add_attribute(att)
+			children.push(att)
+		
+		end
+
+		
+
+	end
+end

@@ -1,0 +1,24 @@
+Lulz is an advanced search engine for people. You're smart, you'll figure it out. 
+
+Lulz is distributed under the http://creativecommons.org/licenses/by-nc-sa/3.0/ licence.
+
+THIS IS VERY ALPHA SOFTWARE, lots of bugs, bad code etc, feedback bug reports and suggestions greatfully accepted at dirtyfilthee@gmail.com
+
+For usage info ./lulz -h 
+
+Example search:
+
+./lulz --alias dirtyfilthy --sex m --country nz --city christchurch --homepage www.dirtyfilthy.net --timeout 240
+
+Status Key:
+
+.	- running transformer
+=	- running parser
+*	- running search
+?  	- performing identity resolution
+!  	- recalculating action queue
+W  	- queue empty, waiting
+F  	- maximum number of agent threads reached
+T  	- timeout reached, waiting on identity resolution & transformers to finish
+
+Configuration & resources are setup in yaml files in config/defaults.yml and config/resource.yml respectively.
