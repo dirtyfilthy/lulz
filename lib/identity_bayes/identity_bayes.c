@@ -278,7 +278,7 @@ long last_row_id(const char *table){
    free(sql);
    rc=sqlite3_step(statement);
    if(rc==SQLITE_ERROR){
-      rb_raise (rb_eRuntimeError, sqlite3_errmsg(db));
+      rb_raise(rb_eRuntimeError, sqlite3_errmsg(db));
    }
    id=sqlite3_column_int(statement,0);
    sqlite3_finalize(statement);
@@ -695,7 +695,7 @@ static VALUE method_set_database(VALUE self, VALUE database){
    const char *err;
    sqlite3_stmt *statement;
    Check_Type(database, T_STRING);
-   rc = set_database(RSTRING(database)->ptr);
+   rc = set_database(RSTRING_PTR(database));
    if( rc ){
       err=sqlite3_errmsg(db);
       sqlite3_close(db);
@@ -738,7 +738,7 @@ static VALUE method_set_database(VALUE self, VALUE database){
       rb_raise (rb_eRuntimeError, sqlite3_errmsg(db));
    }
    sqlite3_finalize(statement); 
-
+	return Qnil;
 }
 
 inline static int is_single_fact_match(PredicateCutout *a, PredicateCutout *b){
@@ -779,7 +779,7 @@ static void hard_ruby_predicate_2_predicate_cutout(VALUE rb_predicate, Predicate
    char *extra;
    #ifdef DEBUG
       printf("in hard_ruby\n");
-      extra=RSTRING(rb_funcall(rb_predicate,to_s_sym,0))->ptr;
+      extra=RSTRING_PTR(rb_funcall(rb_predicate,to_s_sym,0));
       printf("processing predicate %s \n", extra);
       fflush(stdout);
    #endif
@@ -857,8 +857,8 @@ Evidence *rb_predicates_to_evidence(VALUE rb_pred_1, VALUE rb_pred_2){
    order_predicates(&p1,&p2);
    e->pred_1=p1;
    e->pred_2=p2;
-	e->obj1_string=strdup(RSTRING(rb_funcall(rb_ivar_get(rb_pred_1,object_sym),to_s_sym,0))->ptr);
-	e->obj2_string=strdup(RSTRING(rb_funcall(rb_ivar_get(rb_pred_2,object_sym),to_s_sym,0))->ptr);
+	e->obj1_string=strdup(RSTRING_PTR(rb_funcall(rb_ivar_get(rb_pred_1,object_sym),to_s_sym,0)));
+	e->obj2_string=strdup(RSTRING_PTR(rb_funcall(rb_ivar_get(rb_pred_2,object_sym),to_s_sym,0)));
 	e->obj1_string=trim(e->obj1_string);
 	e->obj2_string=trim(e->obj2_string);
 	
@@ -940,10 +940,10 @@ static VALUE method_save_match(VALUE self, VALUE person_1, VALUE person_2, VALUE
    int person_1_len, person_2_len,i,j,match=RTEST(match_v);
    person_1_predicates=rb_funcall(person_1,predicates_sym,0);
    person_2_predicates=rb_funcall(person_2,predicates_sym,0);
-   person_1_len=RARRAY(person_1_predicates)->len;
-   person_2_len=RARRAY(person_2_predicates)->len;
-   person_1_ary=RARRAY(person_1_predicates)->ptr;
-   person_2_ary=RARRAY(person_2_predicates)->ptr;
+   person_1_len=RARRAY_LEN(person_1_predicates);
+   person_2_len=RARRAY_LEN(person_2_predicates);
+   person_1_ary=RARRAY_PTR(person_1_predicates);
+   person_2_ary=RARRAY_PTR(person_2_predicates);
    update_evidence(-978,match);
    for(i=0;i<person_1_len;i++){
       for(j=0;j<person_2_len;j++){
@@ -956,6 +956,7 @@ static VALUE method_save_match(VALUE self, VALUE person_1, VALUE person_2, VALUE
 	 free_evidence(e);	 
       }
    }
+	return Qnil;
 }
 
 
@@ -1016,10 +1017,10 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
    
    person_1_predicates=rb_funcall(person_1,predicates_sym,0);
    person_2_predicates=rb_funcall(person_2,predicates_sym,0);
-   person_1_len=RARRAY(person_1_predicates)->len;
-   person_2_len=RARRAY(person_2_predicates)->len;
-   person_1_ary=RARRAY(person_1_predicates)->ptr;
-   person_2_ary=RARRAY(person_2_predicates)->ptr;
+   person_1_len=RARRAY_LEN(person_1_predicates);
+   person_2_len=RARRAY_LEN(person_2_predicates);
+   person_1_ary=RARRAY_PTR(person_1_predicates);
+   person_2_ary=RARRAY_PTR(person_2_predicates);
    evidence=(Evidence ***) malloc(person_1_len * sizeof(Evidence**));
    
    #ifdef DEBUG
