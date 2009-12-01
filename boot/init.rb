@@ -36,6 +36,23 @@ class OpenStruct
 	end
 end
 require "mofo"
+class Microformat
+module Base
+def build_doc(source)
+      case source
+      when String, File, StringIO
+        result = ''
+        Timeout.timeout(@@timeout) { result = open(source) }
+        Nokogiri(result)
+      when Nokogiri, Nokogiri::Elements
+        source
+      when Hash
+        Nokogiri(source[:text]) if source[:text]
+      end
+    end
+end
+end
+
 IdentityBayes.set_database(SQLITE3_DB);
 
 module Lulz
