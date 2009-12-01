@@ -1,5 +1,5 @@
 SQLITE3_DB="#{LULZ_DIR}/db/lulz.sqlite3"
-require "activerecord"
+require "active_record"
 module Lulz
    
    def self.start_db
