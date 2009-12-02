@@ -2,13 +2,17 @@ Lulz is an advanced search engine for people. You're smart, you'll figure it out
 
 Lulz is distributed under the http://creativecommons.org/licenses/by-nc-sa/3.0/ licence.
 
-THIS IS VERY ALPHA SOFTWARE, lots of bugs, bad code etc, feedback bug reports and suggestions greatfully accepted at dirtyfilthee@gmail.com
+THIS IS VERY ALPHA SOFTWARE, lots of bugs, bad code, etc. Feedback, bug reports and suggestions gratefully accepted at dirtyfilthee@gmail.com
+
+At the moment lulz is very untrained, i recommend using a timeout, i.e. --timeout 420. The timeout only prevents lulz from running new agents, it will still finish transforming and processing the profile queue. Also the output can be quite long, might be an idea to redirect output to a file. You can slim this output down by setting a high match value, say -m 0.8 
+
+
 
 For usage info ./lulz -h 
 
 Example search:
 
-./lulz --alias dirtyfilthy --sex m --country nz --city christchurch --homepage www.dirtyfilthy.net --timeout 240
+./lulz --alias dirtyfilthy --sex m --country nz --city christchurch --homepage www.dirtyfilthy.net -m 0.8 --timeout 240
 
 Status Key:
 

@@ -52,8 +52,12 @@ module Lulz
          chain=nil
 			begin 
 				chain=MarkovPredicateChain.find :first, :conditions => h
+				
 				chain=MarkovPredicateChain.create(h) if chain.nil?
 			rescue SQLite3::BusyException
+				sleep 0.1
+				retry
+			rescue ActiveRecord::StatementInvalid
 				sleep 0.1
 				retry
 			end	
@@ -213,10 +217,11 @@ module Lulz
 		 chain.agents.each do |agent|
 			 chain.get_predicate_probabilities(agent.id)
 			 chain.get_immediate_score(agent,REWARD)
-			 index=index+1
-			 puts index
 		 
 		 end
+		
+	         index=index+1
+	         puts index
 	 end
 	 0.upto(10) do |iteration|
 	    chains.each do |chain|

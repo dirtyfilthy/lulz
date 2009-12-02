@@ -95,7 +95,7 @@ module Lulz
 				score=@score_cache[h][agent] if @score_cache[h].key?(agent)
 				score=-1 if @rel_cache[predicate.subject]<0.2
 				sc=predicate.to_chain.markov_chain_scores.find_by_agent_id(ObjectType.cache_find_or_create_by_name(agent.to_s).id) if score.nil?
-				score=20 if score.nil? and (sc.nil? or sc.count<20)
+				score=20*@rel_cache[predicate.subject] if score.nil? and (sc.nil? or sc.count<20)
 				score=sc.score if score.nil?
 				@score_cache[h][agent]=score
 			end

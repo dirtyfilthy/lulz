@@ -2,7 +2,7 @@ module Lulz
 	class ExtractTldAgent < Agent
 
 		default_process :process
-      transformer
+      		transformer
       set_description "extract a two letter tld from country, email, or url"
       def self.accepts?(pred)
          return false unless pred.object.is_a?(Country) or pred.object.is_a?(EmailAddress) or pred.object.is_a?(URI)
