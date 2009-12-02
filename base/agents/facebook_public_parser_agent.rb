@@ -1,6 +1,6 @@
 
 module Lulz
-	class IdenticaParserAgent < Agent
+	class FacebookPublicAgent < Agent
 		default_process :process
 		parser
 		set_description "parse facebook profiles"
@@ -15,7 +15,6 @@ module Lulz
 		end
 
 
-		# TODO grab the rest of the data
 
 		def process(pred)
 
@@ -29,7 +28,10 @@ module Lulz
 			return nil if canonical.nil?
 			facebook_public=FacebookPublicProfile.new
 			facebook_public.url=canonical
-			brute_face facebook_public, :profile_url, canonical  
+			facebook_public.html_page=html
+			brute_fact facebook_public, :profile_url, canonical
+			picture=URI.parse("http://www.facebook.com#{page.root.css(".picture_container img").first.attributes["src"].to_s}") rescue nil
+			brute_fact facebook_public, :picture, picture			  
 			# let the hcard parser take care of the rest
 			return
 		end
