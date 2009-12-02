@@ -8,7 +8,7 @@ module Lulz
 		attr_accessor :max_threads
 		attr_accessor :agents_ran
 		attr_accessor :created_predicates
-      attr_accessor :action_queue
+		attr_accessor :action_queue
 		@@main_loop_mutex=Monitor.new
 
 
@@ -70,7 +70,7 @@ module Lulz
 			start=Time.now
 			while true do
 				num_threads=Agent.running_agents.keys.length
-				
+
 				if has_timeout
 					next_action=nil
 				else
@@ -259,7 +259,7 @@ module Lulz
 			@main_loop_running=false
 			@recalculator=nil
 			@action_queue=ActionQueue.new
-			
+
 			@agents_ran=[]
 		end
 

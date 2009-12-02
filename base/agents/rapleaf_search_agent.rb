@@ -4,23 +4,23 @@ require "rexml/document"
 
 module Lulz
 	class RapleafSearchAgent < Agent
-      #also_accept_on :homepage
-      default_process :search
-      searcher
-      set_description "search rapleaf for email"
-      PAGES=2      
-      def self.accepts?(pred)
-         subject=pred.subject
-		object=pred.object
-		return false unless Resources.get_rapleaf_api_key
-		return false unless object.is_a?(EmailAddress)
-		return false if is_processed?(object)
-		return true
-      end
+		#also_accept_on :homepage
+		default_process :search
+		searcher
+		set_description "search rapleaf for email"
+		PAGES=2      
+		def self.accepts?(pred)
+			subject=pred.subject
+			object=pred.object
+			return false unless Resources.get_rapleaf_api_key
+			return false unless object.is_a?(EmailAddress)
+			return false if is_processed?(object)
+			return true
+		end
 
 		def search(pred)
 			email=pred.object
-         set_processed email
+			set_processed email
 
 			web=Agent.get_web_agent
 			api_key=Resources.get_rapleaf_api_key.api_key
@@ -31,7 +31,7 @@ module Lulz
 			end
 			rapleaf_profile=RapleafProfile.new
 			rapleaf_profile.email=email
-			
+
 			doc=REXML::Document.new xml			
 			brute_fact rapleaf_profile, :email, email
 			brute_fact rapleaf_profile, :sex, Sex.new(doc.elements["person/basics/gender"].text) rescue nil
@@ -56,6 +56,6 @@ module Lulz
 				brute_fact rapleaf_profile, :homepage_url, url
 				brute_fact email, :email_search_result_url, url
 			end
-	 end
-  end
+		end
+	end
 end
