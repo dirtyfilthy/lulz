@@ -12,7 +12,7 @@ For usage info ./lulz -h
 
 Example search:
 
-./lulz --alias dirtyfilthy --sex m --country nz --city christchurch --homepage www.dirtyfilthy.net -m 0.8 --timeout 240
+./lulz --alias dirtyfilthy --sex m --country nz --city christchurch --homepage www.dirtyfilthy.net --summary -m 0.8 --timeout 240
 
 Status Key:
 
