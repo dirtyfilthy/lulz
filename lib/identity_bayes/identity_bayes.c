@@ -17,13 +17,10 @@ static int  object_id_sym;
 static int creator_sym;
 static int name_sym;
 static int klass_sym;
-static int last_prof_obj_sym;
-static int single_fact_sym;
 static int type_sym;
 static int to_s_sym;
 static int bayes_predicate_sym;
 static int predicates_sym;
-static int last_search_agent_sym;
 static int to_cutout_sym;
 static int relationship_sym;
 static int id_sym;
@@ -38,9 +35,6 @@ typedef struct {
    int object_type_db_id;
    int relationship_db_id;
    int created_by_db_id;
-   int last_profile_object_type_db_id;
-   int last_search_agent_type_db_id;
-   unsigned char is_single_fact; 
 	int clique;
 } PredicateCutout;
 
@@ -67,8 +61,16 @@ typedef struct {
 } MatchResult;
 
 
+typedef struct {
+	int pred_1_id;
+	int pred_2_id;
+	unsigned char match_type;
+	int same;
+	int different;
+	UT_hash_handle hh;
+} EvidenceCache;
 
-
+static EvidenceCache *evidence_cache=NULL;
 
 
 typedef struct {
@@ -78,7 +80,6 @@ typedef struct {
   char *obj1_string;
   char *obj2_string;
   unsigned char match_type;
-  unsigned char is_single_fact;
   MatchResult *match_result;
   int same;
   int different;
@@ -86,6 +87,7 @@ typedef struct {
 
 
 static MatchResult *total_match_cache=NULL;
+static MatchResult *total_evidence_cache=NULL;
 
 
 /* FUNCTIONS */
@@ -136,7 +138,7 @@ static char* predicate_where_conditions(char *table_prefix, PredicateCutout *pre
    unsigned char first=1;
    int i, value;
    dynamic_strcat(&where,"(");
-   for(i=0;i<6;i++){
+   for(i=0;i<4;i++){
       switch(i) {
 	 case 0:
 	    term=".object_type_id = ";
@@ -153,14 +155,6 @@ static char* predicate_where_conditions(char *table_prefix, PredicateCutout *pre
 	 case 3:
 	    term=".created_by_id = ";
 	    value=pred->created_by_db_id;
-	    break;
-	 case 4:
-	    term=".last_profile_object_type_id = ";
-	    value=pred->last_profile_object_type_db_id;
-	    break;
-	 case 5:
-	    term=".last_search_agent_type_id = ";
-	    value=pred->last_search_agent_type_db_id;
 	    break;
 	 default:
 	    printf("We should never reach here!");
@@ -211,8 +205,6 @@ static void generalise_predicate(PredicateCutout *pred, int level){
 	 break;
 	 case 1:
 	 pred->created_by_db_id=DB_NULL_ID;
-	 pred->last_profile_object_type_db_id=DB_NULL_ID;
-	 pred->last_search_agent_type_db_id=DB_NULL_ID;
 	 break;
 	 default:
 	 printf("We should never reach here!");
@@ -224,45 +216,13 @@ static void order_predicates(PredicateCutout **pred_ptr_1, PredicateCutout **pre
    PredicateCutout *pred_1=*pred_ptr_1;
    PredicateCutout *pred_2=*pred_ptr_2;
    int i,val_1,val_2;
-   for(i=0;i<6;i++){
-      switch(i){
-	 case 0:
-	    val_1=pred_1->object_type_db_id;
-	    val_2=pred_2->object_type_db_id;
-	    break;
-	 case 1:
-	    val_1=pred_1->relationship_db_id;
-	    val_2=pred_2->relationship_db_id;
-	    break;
-	 case 2:
-	    val_1=pred_1->last_profile_object_type_db_id;
-	    val_2=pred_2->last_profile_object_type_db_id;
-	    break;
-	 case 3:
-	    val_1=pred_1->created_by_db_id;
-	    val_2=pred_2->created_by_db_id;
-	    break;
-	 case 4:
-	    val_1=pred_1->subject_type_db_id;
-	    val_2=pred_2->subject_type_db_id;
-	    break;
-	 case 5:
-	    val_1=pred_1->last_search_agent_type_db_id;
-	    val_2=pred_2->last_search_agent_type_db_id;
-	    break;
-	 default:
-	    printf("We should never reach here!");
-	    abort();
-      
-      }
-      if(val_1 > val_2){
+      if(pred_1->id > pred_2->id){
 	 swap_ptr((void **) pred_ptr_1, (void **) pred_ptr_2);
 	 return;     
       }
       else if(val_1 < val_2) {
 	 return;
       }
-   }
 }
 
 
@@ -311,14 +271,12 @@ static void find_or_create_predicate_cutout(PredicateCutout *pred){
 	free(sql);
 	free(where);
 	sqlite3_finalize(statement);
-	sql="INSERT INTO predicate_cutouts (object_type_id, subject_type_id, relationship_id, last_profile_object_type_id, created_by_id, last_search_agent_type_id) VALUES (?,?,?,?,?,?)";
+	sql="INSERT INTO predicate_cutouts (object_type_id, subject_type_id, relationship_id, created_by_id) VALUES (?,?,?,?,?,?)";
 	sqlite3_prepare_v2(db, sql, strlen(sql), &statement, NULL);
 	sqlite3_bind_int(statement,1,pred->object_type_db_id);
 	sqlite3_bind_int(statement,2,pred->subject_type_db_id);
 	sqlite3_bind_int(statement,3,pred->relationship_db_id);
-	sqlite3_bind_int(statement,4,pred->last_profile_object_type_db_id);
-	sqlite3_bind_int(statement,5,pred->created_by_db_id);
-	sqlite3_bind_int(statement,6,pred->last_search_agent_type_db_id);
+	sqlite3_bind_int(statement,4,pred->created_by_db_id);
 	rc=sqlite3_step(statement);
 	
 	sqlite3_finalize(statement); 
@@ -340,12 +298,11 @@ static void find_or_create_or_update_evidence(Evidence *e, int update, int match
 	sqlite3_stmt *statement;
 	int rc;
 	int same,different;
-	sql="SELECT id,same,different FROM evidence WHERE pred_1=? AND pred_2=? AND match_type=? AND single_fact=? LIMIT 1";
+	sql="SELECT id,same,different FROM evidence WHERE pred_1=? AND pred_2=? AND match_type=? LIMIT 1";
 	sqlite3_prepare_v2(db, sql, strlen(sql), &statement, NULL);
 	sqlite3_bind_int(statement,1,e->pred_1->id);
 	sqlite3_bind_int(statement,2,e->pred_2->id);
 	sqlite3_bind_int(statement,3,e->match_type);
-	sqlite3_bind_int(statement,4,e->is_single_fact);
 	rc=sqlite3_step(statement);
 	if(rc==SQLITE_ERROR){
 		rb_raise (rb_eRuntimeError, sqlite3_errmsg(db));
@@ -362,20 +319,19 @@ static void find_or_create_or_update_evidence(Evidence *e, int update, int match
 	}
 	sqlite3_finalize(statement);
 
-	sql="INSERT INTO evidence (pred_1, pred_2, match_type, single_fact, same, different) VALUES (?,?,?,?,?,?)";
+	sql="INSERT INTO evidence (pred_1, pred_2, match_type, same, different) VALUES (?,?,?,?,?)";
 	sqlite3_prepare_v2(db, sql, strlen(sql), &statement, NULL);
 	sqlite3_bind_int(statement,1,e->pred_1->id);
 	sqlite3_bind_int(statement,2,e->pred_2->id);
 	sqlite3_bind_int(statement,3,e->match_type);
-	sqlite3_bind_int(statement,4,e->is_single_fact);
 	if(update){
-		sqlite3_bind_int(statement,5,match ? 1 : 0);
-		sqlite3_bind_int(statement,6,match ? 0 : 1);
+		sqlite3_bind_int(statement,4,match ? 1 : 0);
+		sqlite3_bind_int(statement,5,match ? 0 : 1);
 	}
 	else{
 			
+		sqlite3_bind_int(statement,4,0);
 		sqlite3_bind_int(statement,5,0);
-		sqlite3_bind_int(statement,6,0);
 	}
 	rc=sqlite3_step(statement);
 	
@@ -392,7 +348,9 @@ static void get_evidentual_matches(MatchResult *result, Evidence *e){
    char *sql=NULL, *where_1, *where_2;
    int generalisation_level,rc;
    int s1,d1;
-   PredicateCutout *pred_copy_1;
+   int keylen;
+	EvidenceCache *e_cache, *lookup;
+	PredicateCutout *pred_copy_1;
    PredicateCutout *pred_copy_2;
    sqlite3_stmt *statement;
    char *tail;
@@ -411,6 +369,22 @@ static void get_evidentual_matches(MatchResult *result, Evidence *e){
       result->different=e->match_result->different;
       return;
    }
+	
+	
+	keylen = offsetof(EvidenceCache, match_type)       /* offset of last key field */
+		      + sizeof(unsigned char)             /* size of last key field */
+				- offsetof(EvidenceCache, pred_1_id);  /* offset of first key field */
+	lookup=(EvidenceCache*) calloc(1, sizeof(EvidenceCache));
+	lookup->pred_1_id=e->pred_1->id;
+	lookup->pred_2_id=e->pred_2->id;
+	lookup->match_type=e->match_type;
+	HASH_FIND( hh, evidence_cache, &lookup->pred_1_id, keylen, e_cache );
+	free(lookup);
+
+	if(e_cache){
+		result->same=e_cache->same;
+		result->different=e_cache->different;
+	}
 
    pred_copy_1=memcpy((PredicateCutout *) malloc(sizeof(PredicateCutout)), e->pred_1, sizeof(PredicateCutout));
    pred_copy_2=memcpy((PredicateCutout *) malloc(sizeof(PredicateCutout)), e->pred_2, sizeof(PredicateCutout));
@@ -444,11 +418,11 @@ static void get_evidentual_matches(MatchResult *result, Evidence *e){
       
 			where_1=predicate_where_conditions("pred_1", pred_copy_1);
 			where_2=predicate_where_conditions("pred_2", pred_copy_2);
-			dynamic_strcat(&sql,"SELECT SUM(same), SUM(different) FROM evidence LEFT JOIN predicate_cutouts as pred_1 ON pred_1.id = evidence.pred_1 LEFT JOIN predicate_cutouts AS pred_2 ON pred_2.id=evidence.pred_2 WHERE match_type = ? AND single_fact = ? AND ");
+			dynamic_strcat(&sql,"SELECT SUM(same), SUM(different) FROM evidence LEFT JOIN predicate_cutouts as pred_1 ON pred_1.id = evidence.pred_1 LEFT JOIN predicate_cutouts AS pred_2 ON pred_2.id=evidence.pred_2 WHERE match_type = ? AND ");
 			dynamic_strcat(&sql,where_1);
 			dynamic_strcat(&sql," AND ");
 			dynamic_strcat(&sql,where_2);
-			dynamic_strcat(&sql," AND evidence.id>0");
+			dynamic_strcat(&sql," AND evidence.id>0 AND pred_1.id<=pred_2.id");
 			#ifdef DEBUG
 			printf("predicate sql %s\n",sql);
 			fflush(stdout);
@@ -456,7 +430,6 @@ static void get_evidentual_matches(MatchResult *result, Evidence *e){
 
 			sqlite3_prepare_v2(db, sql, strlen(sql), &statement, NULL);
 			sqlite3_bind_int(statement,1,e->match_type);
-			sqlite3_bind_int(statement,2,e->is_single_fact);
 			free(where_1);
 			free(where_2);
 			free(sql);
@@ -481,9 +454,16 @@ static void get_evidentual_matches(MatchResult *result, Evidence *e){
 			}	
 		}
 	}
-   free(pred_copy_1);
+   e->match_result=memcpy((MatchResult *) malloc(sizeof(MatchResult)), result, sizeof(MatchResult));
+   e_cache=(EvidenceCache*) calloc(1, sizeof(EvidenceCache));
+	e_cache->pred_1_id=e->pred_1->id;
+	e_cache->pred_2_id=e->pred_2->id;
+	e_cache->match_type=e->match_type;	
+	e_cache->same=result->same;
+	e_cache->different=result->different;
+	HASH_ADD( hh, evidence_cache , pred_1_id, keylen, e_cache);
+   free(pred_copy_1);  
    free(pred_copy_2);  
-   e->match_result=memcpy((MatchResult *) malloc(sizeof(MatchResult)), result, sizeof(MatchResult)); 
 }
 
 static void sqlite3_begin(){
@@ -589,11 +569,33 @@ void get_total_matches(MatchResult *out){
 
 }
 
+
+void get_total_evidence(MatchResult *out){
+   char *sql;
+   sqlite3_stmt *statement;
+   int rc;
+   if(total_evidence_cache==NULL){
+      sql="SELECT same, different FROM evidence WHERE id = -979 LIMIT 1";
+      sqlite3_prepare_v2(db, sql, strlen(sql), &statement, NULL);
+      rc=sqlite3_step(statement);
+      if(rc==SQLITE_ERROR){
+	 rb_raise (rb_eRuntimeError, sqlite3_errmsg(db));
+      }
+      total_evidence_cache=(MatchResult *) malloc(sizeof(MatchResult));
+      total_evidence_cache->same=sqlite3_column_int(statement,0);
+      total_evidence_cache->different=sqlite3_column_int(statement,1);
+      sqlite3_finalize(statement);
+   }
+   out->same=total_match_cache->same;
+   out->different=total_match_cache->different;
+
+}
+
 void calculate_posterior_probability(mpq_t posterior, mpq_t prior, Evidence *e){
    mpq_t evidence_given_same, evidence_given_different, same_X_prior,temp_1, one_minus_prior;
    MatchResult match_result;
    MatchResult total_matches;
-   
+   MatchResult total_evidence;
    mpq_init(evidence_given_same);
    mpq_init(evidence_given_different);
    mpq_init(same_X_prior);
@@ -604,7 +606,7 @@ void calculate_posterior_probability(mpq_t posterior, mpq_t prior, Evidence *e){
 	 fflush(stdout);
    #endif
  
-   get_total_matches(&total_matches);
+	get_total_evidence(&total_evidence);
    get_evidentual_matches(&match_result,e);
   
 	/* the law of CROMWELL \m/ */
@@ -616,8 +618,8 @@ void calculate_posterior_probability(mpq_t posterior, mpq_t prior, Evidence *e){
 	
    /* ((evidence_given_same*prior)  /  ( (evidence_given_same*prior)  +  (evidence_given_different * (1-prior)) )); */
 
-   mpq_set_ui(evidence_given_same,match_result.same,total_matches.same);
-   mpq_set_ui(evidence_given_different,match_result.different,total_matches.different);
+   mpq_set_ui(evidence_given_same,match_result.same,total_evidence.same);
+   mpq_set_ui(evidence_given_different,match_result.different,total_evidence.different);
    mpq_canonicalize(evidence_given_same);
    mpq_canonicalize(evidence_given_different);
    mpq_mul(same_X_prior,evidence_given_same,prior);
@@ -741,10 +743,6 @@ static VALUE method_set_database(VALUE self, VALUE database){
 
 }
 
-inline static int is_single_fact_match(PredicateCutout *a, PredicateCutout *b){
-   return (a->relationship_db_id==b->relationship_db_id && (a->is_single_fact || b->is_single_fact) && (a->object_type_db_id==b->object_type_db_id));
-   
-}
 
 
    
@@ -774,8 +772,6 @@ static void hard_ruby_predicate_2_predicate_cutout(VALUE rb_predicate, Predicate
    VALUE cutout;
    /* int obj_id=FIX2INT(rb_ivar_get(rb_predicate,obj_id_sym))->ptr; */
    const char *creator;
-   const char *last_prof_obj;
-   const char *last_search_agent;
    char *extra;
    #ifdef DEBUG
       printf("in hard_ruby\n");
@@ -809,9 +805,7 @@ static void hard_ruby_predicate_2_predicate_cutout(VALUE rb_predicate, Predicate
       fflush(stdout);
    #endif 
 	p->subject_type_db_id=FIX2INT(rb_funcall(cutout,subject_sym,0));
-   p->last_profile_object_type_db_id=FIX2INT(rb_funcall(cutout,last_prof_obj_sym,0));
    p->relationship_db_id=FIX2INT(rb_funcall(cutout,relationship_sym,0));
-   p->last_search_agent_type_db_id=FIX2INT(rb_funcall(cutout,last_search_agent_sym,0));
    p->id=FIX2INT(rb_funcall(cutout,id_sym,0));
    
     #ifdef DEBUG
@@ -819,7 +813,6 @@ static void hard_ruby_predicate_2_predicate_cutout(VALUE rb_predicate, Predicate
       fflush(stdout);
    #endif 
    s2=rb_ivar_get(rb_predicate,type_sym);
-   p->is_single_fact=(TYPE(s2)==T_SYMBOL && SYM2ID(s2)==single_fact_sym);
 
    #ifdef DEBUG
       printf("filled!\n");
@@ -885,7 +878,6 @@ Evidence *rb_predicates_to_evidence(VALUE rb_pred_1, VALUE rb_pred_2){
    #endif
    
       e->match_type=MATCH_NONE;
-      e->is_single_fact=0;
       return e;
    }
    
@@ -897,14 +889,8 @@ Evidence *rb_predicates_to_evidence(VALUE rb_pred_1, VALUE rb_pred_2){
 
    e->match_type=get_match_type(e);
   
-   #ifdef DEBUG
-      printf("getting single fact\n");
-      fflush(stdout);
-   #endif
 
 
-   e->is_single_fact=is_single_fact_match(p1,p2);
-   e->match_type=(e->is_single_fact && e->match_type!=MATCH_FULL) ? MATCH_NONE : e->match_type;
    return e;
 }	
 
@@ -948,11 +934,8 @@ static VALUE method_save_match(VALUE self, VALUE person_1, VALUE person_2, VALUE
    for(i=0;i<person_1_len;i++){
       for(j=0;j<person_2_len;j++){
 	 e=rb_predicates_to_evidence(person_1_ary[i],person_2_ary[j]);
-	 if(e->match_type==MATCH_NONE && !e->is_single_fact){
-	    free_evidence(e);
-	    continue;
-	 }
 	 find_or_create_or_update_evidence(e,1,match);
+	 update_evidence(-979,match);
 	 free_evidence(e);	 
       }
    }
@@ -970,7 +953,6 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
    int i,j,c,iterations;
    int high_1;
    int high_2;
-   int single_fact;
    int adjusted_posterior=1;
    double retval;
    MatchResult total_matches;  
@@ -1047,22 +1029,6 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
 
 
 	 
-	 if(e->match_type==MATCH_NONE && !e->is_single_fact){
-	    #ifdef DEBUG
-	    printf("match type NONE, freeing");
-	    fflush(stdout);
-	    #endif
-
-	    free_evidence(e);
-	    e=NULL;
-	 }
-	 else{
-	     #ifdef DEBUG
-	    printf("match type NOT NONE");
-	    fflush(stdout);
-	    #endif
-
-	 }
 	 evidence[i][j]=e;
 
       }
@@ -1085,7 +1051,6 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
       high_1=-1;
       high_2=-2;
 	   
-      single_fact=0;
       mpq_set_ui(highest,0,1);
       mpq_set(posterior,prior);
       /* find the most influential piece of evidence */
@@ -1093,7 +1058,7 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
       for(i=0;i<person_1_len;i++){
 			for(j=0;j<person_2_len;j++){
 	     
-				if(evidence[i][j]==NULL || (!evidence[i][j]->is_single_fact && single_fact)){
+				if(evidence[i][j]==NULL){
 					#ifdef DEBUG
 					printf("evidence %d %d null, continuing\n",i,j);
 					fflush(stdout);
@@ -1104,14 +1069,6 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
 				calculate_posterior_probability(result,prior,evidence[i][j]);
 				mpq_sub(influence,prior,result);
 				mpq_abs(influence,influence);
-				if(evidence[i][j]->is_single_fact && !single_fact){
-					high_1=i;
-					high_2=j;
-					mpq_set(highest,influence);
-					mpq_set(posterior,result);
-					single_fact=1;
-					continue;
-				}
 				if(mpq_cmp(influence,highest)>0){
 					mpq_set(highest,influence);
 					mpq_set(posterior,result);
@@ -1203,10 +1160,7 @@ void Init_identity_bayes() {
    type_sym=rb_intern("@type");
    name_sym=rb_intern("@name");
    relationship_sym=rb_intern("relationship_id");
-   last_prof_obj_sym=rb_intern("last_profile_object_type_id");
-   last_search_agent_sym=rb_intern("last_search_agent_type_id");
    klass_sym=rb_intern("class");
-   single_fact_sym=rb_intern("single_fact");
    to_s_sym=rb_intern("to_s");
    clique_sym=rb_intern("clique");
 	id_sym=rb_intern("id");

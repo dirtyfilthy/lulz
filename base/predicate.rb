@@ -24,8 +24,10 @@ module Lulz
 		@@all_predicates={}
 		@@clique_hash={}
 
+		alias :relationship :name
+
 		def runnable_by?(agent)
-			self.tested_agents << agent unless self.tested_agents.include?(agent) or agent.too_many_agents?
+			self.tested_agents << agent.to_s unless self.tested_agents.include?(agent.to_s) or agent.too_many_agents?
 			return agent.accepts?(self)
 		end
 		def self.new_clique

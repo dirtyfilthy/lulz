@@ -319,15 +319,22 @@ module Lulz
 					Blackboard.instance.action_queue.add_dirty_predicate(pred)
 				end
 				changed_profiles.keys.each do |profile|
-					cliqable=[]
+					cliqable={}
+					
+					# autoclique countries, localities and single_facts
+					
 					profile._predicates.each do |pred|
-						cliqable << pred if pred.object.is_a?(Country) or pred.object.is_a?(Locality)
-					
+						key=nil
+						key=:countries if pred.object.is_a?(Country) or pred.object.is_a?(Locality)
+						key=pred.relationship if pred.type==:single_fact
+						cliqable[key] ||= [] unless key.nil?
+						cliqable[key] << pred unless key.nil?
 					end
-					top=cliqable.pop
-					
-					cliqable.each {|c| set_clique top,c } unless top.nil?
-					Agent.enqueue_recalc(profile)
+					cliqable.each_value {|clique|
+						top=clique.pop
+						clique.each {|c| set_clique top,c } unless top.nil?
+					}
+						Agent.enqueue_recalc(profile)
 				end
 		end
 

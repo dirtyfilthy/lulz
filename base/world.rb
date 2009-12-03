@@ -1,12 +1,13 @@
 require 'monitor'
-require 'singleton'
+require 'zaml'
 module Lulz
 	class World
-		include Singleton
 
 		attr_reader :predicates
 		attr_reader :objects
 		attr_reader :mutex
+		
+		@@real_world=nil
 		def initialize
 			@object_create_callback=nil 
 			@predicate_add_callback=nil
@@ -34,6 +35,25 @@ module Lulz
 			@direct_match_hashes={}
 		end
 
+		def self.instance
+			@@real_world=World.new if @@real_world.blank?
+			return @@real_world
+		end
+
+		def save
+			filez=Dir.glob("#{LULZ_DIR}/data/world.*")
+			filez.sort {|a,b| a<=>b }
+			number=filez.last.split(".").last.to_i rescue 0
+			number=number+1
+			number=sprintf("%04d",number)
+			File.open("#{LULZ_DIR}/data/world.#{number}", 'w') do |out|
+				   Marshal.dump(self, out)
+			end
+		end
+
+		def self.load(file)
+			@@real_world=ZAML.load_file(file)
+		end
 		def sorted_profiles
 			sorted=self.profiles.clone.sort { |a1,b1| matches[a1].to_f <=> matches[b1].to_f }.reverse
 			return sorted

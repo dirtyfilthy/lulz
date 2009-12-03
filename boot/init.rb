@@ -102,5 +102,6 @@ else
 		i=i+1
 	end
 	Lulz::CLI::ask_matches(b) if b.options[:match_mode]
+	Lulz::World.instance.save if b.options[:match_mode]
 end
 
