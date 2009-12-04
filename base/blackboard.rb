@@ -86,7 +86,7 @@ module Lulz
 
 					unless (num_threads<max_threads and (!next_action.nil?))
 						break if waited>3
-						sleep 10
+						sleep 2
 
 						next;
 					end

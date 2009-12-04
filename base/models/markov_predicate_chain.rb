@@ -55,10 +55,12 @@ module Lulz
 		
 				chain=MarkovPredicateChain.create(h) if chain.nil?
 			rescue SQLite3::BusyException
-				sleep 0.2
+				puts "sleep"
+				sleep 0.5*rand
 				retry
 			rescue ActiveRecord::StatementInvalid
-				sleep 0.2
+				puts "sleep"
+				sleep 0.5*rand
 				retry
 			end	
 			return chain

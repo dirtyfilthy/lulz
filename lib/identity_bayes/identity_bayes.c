@@ -70,8 +70,21 @@ typedef struct {
 	UT_hash_handle hh;
 } EvidenceCache;
 
-static EvidenceCache *evidence_cache=NULL;
 
+typedef struct {
+	int pred_1_ob;
+	int pred_2_ob;
+	int pred_1_rel;
+	int pred_2_rel;
+	int match_type;
+	int same;
+	int different;
+	UT_hash_handle hh;
+} GeneralisedEvidenceCache;
+
+
+static EvidenceCache *evidence_cache=NULL;
+static GeneralisedEvidenceCache *generalised_evidence_cache=NULL;
 
 typedef struct {
   int id;
@@ -190,21 +203,20 @@ static void generalise_predicate(PredicateCutout *pred, int level){
    switch(level){
       case 0:
 	 break;
-    case 4:
+    case 3:
 	 pred->object_type_db_id=DB_NULL_ID;
 	 break;
             
-    case 3:
+    case 2:
 
 	 pred->relationship_db_id=DB_NULL_ID;
 	 break;
 	  
 	 
-    case 2:
+    case 1:
 	 
 	 pred->subject_type_db_id=DB_NULL_ID;
-	 break;
-	 case 1:
+	 
 	 pred->created_by_db_id=DB_NULL_ID;
 	 break;
 	 default:
@@ -351,6 +363,7 @@ static void get_evidentual_matches(MatchResult *result, Evidence *e){
    int s1,d1;
    int keylen;
 	EvidenceCache *e_cache, *lookup;
+	GeneralisedEvidenceCache *g_cache, *g_lookup;
 	PredicateCutout *pred_copy_1;
    PredicateCutout *pred_copy_2;
    sqlite3_stmt *statement;
@@ -368,8 +381,10 @@ static void get_evidentual_matches(MatchResult *result, Evidence *e){
 
       result->same=e->match_result->same;
       result->different=e->match_result->different;
-      return;
+		return;
    }
+
+
 	
 	
 	keylen = offsetof(EvidenceCache, match_type)       /* offset of last key field */
@@ -392,7 +407,10 @@ static void get_evidentual_matches(MatchResult *result, Evidence *e){
       #endif
 		return;
 	}
-
+	
+	keylen = offsetof(GeneralisedEvidenceCache, match_type)       /* offset of last key field */
+		      + sizeof(int)             /* size of last key field */
+				- offsetof(GeneralisedEvidenceCache, pred_1_ob);  /* offset of first key field */
    pred_copy_1=memcpy((PredicateCutout *) malloc(sizeof(PredicateCutout)), e->pred_1, sizeof(PredicateCutout));
    pred_copy_2=memcpy((PredicateCutout *) malloc(sizeof(PredicateCutout)), e->pred_2, sizeof(PredicateCutout));
   
@@ -418,48 +436,79 @@ static void get_evidentual_matches(MatchResult *result, Evidence *e){
 		result->different=e->different;	
 	}
 	else{
-		for(generalisation_level=1;generalisation_level<5;generalisation_level++){
-			sql=NULL;
-			generalise_predicate(pred_copy_1, generalisation_level);
-			generalise_predicate(pred_copy_2, generalisation_level);
-      
-			where_1=predicate_where_conditions("pred_1", pred_copy_1);
-			where_2=predicate_where_conditions("pred_2", pred_copy_2);
-			dynamic_strcat(&sql,"SELECT SUM(same), SUM(different) FROM evidence LEFT JOIN predicate_cutouts as pred_1 ON pred_1.id = evidence.pred_1 LEFT JOIN predicate_cutouts AS pred_2 ON pred_2.id=evidence.pred_2 WHERE match_type = ? AND ");
-			dynamic_strcat(&sql,where_1);
-			dynamic_strcat(&sql," AND ");
-			dynamic_strcat(&sql,where_2);
-			dynamic_strcat(&sql," AND evidence.id>0 AND pred_1.id<=pred_2.id");
+		sql=NULL;
+	
+		g_lookup=(GeneralisedEvidenceCache *) calloc(1, sizeof(GeneralisedEvidenceCache));
+		g_lookup->pred_1_ob=e->pred_1->object_type_db_id;
+		g_lookup->pred_2_ob=e->pred_2->object_type_db_id;
+		g_lookup->pred_1_rel=e->pred_1->relationship_db_id;
+		g_lookup->pred_2_rel=e->pred_2->relationship_db_id;
+		g_lookup->match_type=e->match_type;
+		HASH_FIND( hh, generalised_evidence_cache, &g_lookup->pred_1_ob, keylen, g_cache );
+		free(g_lookup);
+
+		if(g_cache){
+			result->same=g_cache->same;
+			result->different=g_cache->different;
+			free(pred_copy_1);
+			free(pred_copy_2);		
 			#ifdef DEBUG
-			printf("predicate sql %s\n",sql);
+			printf("using GCACHED match\n");
 			fflush(stdout);
 			#endif
 
-			sqlite3_prepare_v2(db, sql, strlen(sql), &statement, NULL);
-			sqlite3_bind_int(statement,1,e->match_type);
-			free(where_1);
-			free(where_2);
-			free(sql);
-			rc=sqlite3_step(statement);
-			if(rc==SQLITE_ERROR){
-				rb_raise (rb_eRuntimeError, sqlite3_errmsg(db));
-			}
-			if(rc==SQLITE_ROW){
-				s1=sqlite3_column_int(statement,0);
-				d1=sqlite3_column_int(statement,1);
-			}
-			sqlite3_finalize(statement);
-			if(s1+d1>MINIMUM_RESULTS){
-	 
-				 #ifdef DEBUG
-					printf("above minimum %d %d\n",s1,d1);
-					fflush(stdout);
-				#endif     
-				result->same=s1;
-				result->different=d1;
-				break;
-			}	
+			return;
 		}
+		generalise_predicate(pred_copy_1, 1);
+		generalise_predicate(pred_copy_2, 1);
+      
+		where_1=predicate_where_conditions("pred_1", pred_copy_1);
+		where_2=predicate_where_conditions("pred_2", pred_copy_2);
+		dynamic_strcat(&sql,"SELECT SUM(same), SUM(different) FROM evidence LEFT JOIN predicate_cutouts as pred_1 ON pred_1.id = evidence.pred_1 LEFT JOIN predicate_cutouts AS pred_2 ON pred_2.id=evidence.pred_2 WHERE match_type = ? AND ");
+		dynamic_strcat(&sql,where_1);
+		dynamic_strcat(&sql," AND ");
+		dynamic_strcat(&sql,where_2);
+		dynamic_strcat(&sql," AND evidence.id>0 AND pred_1.id<=pred_2.id");
+		#ifdef DEBUG
+			printf("predicate sql %s\n",sql);
+			fflush(stdout);
+		#endif
+	
+		sqlite3_prepare_v2(db, sql, strlen(sql), &statement, NULL);
+		sqlite3_bind_int(statement,1,e->match_type);
+		free(where_1);
+		free(where_2);
+		free(sql);
+		rc=sqlite3_step(statement);
+		if(rc==SQLITE_ERROR){
+			rb_raise (rb_eRuntimeError, sqlite3_errmsg(db));
+		}
+		if(rc==SQLITE_ROW){
+			s1=sqlite3_column_int(statement,0);
+			d1=sqlite3_column_int(statement,1);
+		}
+		sqlite3_finalize(statement);
+		if(s1+d1>MINIMUM_RESULTS){
+	 
+			#ifdef DEBUG
+				printf("above minimum %d %d\n",s1,d1);
+				fflush(stdout);
+			#endif     
+			result->same=s1;
+			result->different=d1;
+		}	
+
+
+		g_cache=(GeneralisedEvidenceCache*) calloc(1, sizeof(GeneralisedEvidenceCache));
+		g_cache->pred_1_ob=e->pred_1->object_type_db_id;
+		g_cache->pred_2_ob=e->pred_2->object_type_db_id;
+		g_cache->pred_1_rel=e->pred_1->relationship_db_id;
+		g_cache->pred_2_rel=e->pred_2->relationship_db_id;
+		g_cache->match_type=e->match_type;
+		g_cache->same=result->same;
+		g_cache->different=result->different;
+	
+		HASH_ADD( hh, generalised_evidence_cache , pred_1_ob, keylen, g_cache);
 	}
    e->match_result=memcpy((MatchResult *) malloc(sizeof(MatchResult)), result, sizeof(MatchResult));
    e_cache=(EvidenceCache*) calloc(1, sizeof(EvidenceCache));
@@ -468,6 +517,7 @@ static void get_evidentual_matches(MatchResult *result, Evidence *e){
 	e_cache->match_type=e->match_type;	
 	e_cache->same=result->same;
 	e_cache->different=result->different;
+	
 	HASH_ADD( hh, evidence_cache , pred_1_id, keylen, e_cache);
    free(pred_copy_1);  
    free(pred_copy_2);  
@@ -679,7 +729,7 @@ void calculate_posterior_probability(mpq_t posterior, mpq_t prior, Evidence *e){
 
 
 static int set_database(char *database){
-	return sqlite3_open_v2(database, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, NULL);
+	return sqlite3_open_v2(database, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
 	//sqlite3_open_v2(":memory:", &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, NULL);
 	//loadOrSaveDb(db, database, 0);
 }
@@ -869,7 +919,7 @@ Evidence *rb_predicates_to_evidence(VALUE rb_pred_1, VALUE rb_pred_2){
    hard_ruby_predicate_2_predicate_cutout(rb_pred_2, p2);
    
    #ifdef DEBUG
-      printf("order predicates BEFORE %d %d\n",p1->object_type_db_id, p2->object_type_db_id);
+      printf("order predicates BEFORE %d %d\n",p1->id, p2->id);
       fflush(stdout);
    #endif
 
@@ -890,7 +940,7 @@ Evidence *rb_predicates_to_evidence(VALUE rb_pred_1, VALUE rb_pred_2){
       e->obj2_string[i]=tolower(e->obj2_string[i]);
    }
    #ifdef DEBUG
-      printf("AFTER %d %d\n", p1->object_type_db_id, p2->object_type_db_id);
+      printf("AFTER %d %d\n", p1->id, p2->id);
       printf("classes %s %s\n",rb_class2name(CLASS_OF(rb_pred_1)), rb_class2name(CLASS_OF(rb_pred_2))); 
       printf("checking null objects\n");
       fflush(stdout);
