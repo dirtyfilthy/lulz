@@ -1,4 +1,4 @@
-#!/usr/bin/ruby1.8
+#!/usr/bin/ruby1.9.1
 LULZ_DIR = File.dirname($0)
 module Lulz
 USE_CLI=true

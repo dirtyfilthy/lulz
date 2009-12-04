@@ -1,4 +1,3 @@
-require 'mofo'
 module Lulz
 	class HCardParserAgent < Agent
 

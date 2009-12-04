@@ -28,6 +28,31 @@ require "base/models/markov_agent_run_profile.rb"
 require "base/models/markov_produced_predicate.rb"
 require "base/cli.rb" if Lulz::USE_CLI
 require "base/resources.rb"
+# just so mofo can undefine it
+class OpenStruct
+	def type
+	end
+	def id
+	end
+end
+require "mofo"
+class Microformat
+module Base
+def build_doc(source)
+      case source
+      when String, File, StringIO
+        result = ''
+        Timeout.timeout(@@timeout) { result = open(source) }
+        Nokogiri(result)
+      when Nokogiri, Nokogiri::Elements
+        source
+      when Hash
+        Nokogiri(source[:text]) if source[:text]
+      end
+    end
+end
+end
+
 
 module Lulz
 	ERROR_LOG=Logger.new "#{LULZ_DIR}/log/error.log"
