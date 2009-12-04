@@ -550,7 +550,6 @@ static ObjectType *get_or_create_object_type(const char *type){
    HASH_FIND_STR(object_types, type, ot);
    
    if(ot==NULL){
-      sqlite3_begin();
       ot=(ObjectType *) malloc(sizeof(ObjectType));
       sql="INSERT INTO object_types (name) VALUES (?)";
       sqlite3_prepare_v2(db, sql, strlen(sql), &statement, NULL);
@@ -563,7 +562,6 @@ static ObjectType *get_or_create_object_type(const char *type){
       sqlite3_finalize(statement);
       ot->name=(char *) strcpy((char *) malloc(strlen(type)+1),type);
       ot->id=(long) last_row_id("object_types");
-      sqlite3_commit();
       #ifdef DEBUG
 	 printf("object type last_rowid %d\n",ot->id);
 	 fflush(stdout);
@@ -581,7 +579,6 @@ static Relationship *get_or_create_relationship(const char *type){
    char *sql;
    HASH_FIND_STR(relationships, type, r);
    if(r==NULL){
-      sqlite3_begin();
       r=(Relationship *) malloc(sizeof(Relationship));
       sql="INSERT INTO relationships (name) VALUES (?)";
       sqlite3_prepare_v2(db, sql, strlen(sql), &statement, NULL);
@@ -599,7 +596,6 @@ static Relationship *get_or_create_relationship(const char *type){
 	 printf("object type last_rowid %d\n",r->id);
 	 fflush(stdout);
       #endif
-      sqlite3_commit();
 
    }
    return r;
@@ -992,6 +988,13 @@ static void update_evidence(int id, int match){
    
 }
 
+
+static VALUE method_steal_db_handle(VALUE self, VALUE handle){
+	sqlite3_close(RDATA(handle)->data);
+	RDATA(handle)->data=db;
+	return Qnil;
+}
+
 static VALUE method_save_match(VALUE self, VALUE person_1, VALUE person_2, VALUE match_v){
    VALUE person_1_predicates;
    VALUE person_2_predicates;
@@ -1089,7 +1092,6 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
       fflush(stdout);
    #endif
 
-	sqlite3_begin(); 
    
    for(i=0;i<person_1_len;i++){
       evidence[i]=(Evidence **) malloc(person_2_len * sizeof(Evidence*));
@@ -1112,7 +1114,6 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
 		set_likelyhood_ratio(e);
       }
    }
-	sqlite3_commit();
    iterations=person_1_len<person_2_len ? person_1_len : person_2_len;
    
    #ifdef DEBUG
@@ -1253,7 +1254,8 @@ void Init_identity_bayes() {
    rb_define_module_function(rb_mIdentityBayes, "calculate_match", method_calculate_match, 2);
    rb_define_module_function(rb_mIdentityBayes, "set_database", method_set_database, 1);
    rb_define_module_function(rb_mIdentityBayes, "save_match", method_save_match, 3);   
-   /* 1 as rational number using GnuMP library */
+   rb_define_module_function(rb_mIdentityBayes, "steal_db_handle", method_steal_db_handle, 1);
+	/* 1 as rational number using GnuMP library */
    
    mpq_init(MPQ_ONE);
    mpq_set_ui(MPQ_ONE,1,1);

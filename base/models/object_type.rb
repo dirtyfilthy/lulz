@@ -7,6 +7,7 @@ class ObjectType < ActiveRecord::Base
 			obj_type=ObjectType.find_or_create_by_name(name)
 		rescue ActiveRecord::StatementInvalid
 			sleep 0.1
+			puts "sleep"
 			retry
 		end
 

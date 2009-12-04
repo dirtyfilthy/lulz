@@ -26,7 +26,7 @@ module Lulz
 		end	
 
 		def self.running_agents
-			stopped=@@running_agents.keys.select { |agent| (@@running_agents[agent].nil? or !@@running_agents[agent].alive?)}
+			stopped=@@running_agents.keys.select { |agent| (@@running_agents[agent].nil? or (!@@running_agents[agent].alive? rescue true))}
 			stopped.each { |dead| @@running_agents.delete(dead) }
 			return @@running_agents
 		end
@@ -301,18 +301,15 @@ module Lulz
 				end
 				@produced_predicates.each do |pred|
 					next if pred.nil?
-					pred.created_from=@from_predicate.created_from.clone.push(@from_predicate)
+					pred.created_from=@from_predicate.created_from.clone.push(@from_predicate) unless @from_predicate.nil?
 					pred.last_profile_object=@last_profile_object
 					pred.last_search_agent=@last_search_agent
-			   end unless @from_predicate.nil?
-			@produced_predicates.each do |pred|
-				next if pred.nil?
-				if pred.subject.is_a? Profile 
+					pred.to_cutout
+					if pred.subject.is_a? Profile 
 						profile=pred.subject
 						changed_profiles[profile]||=[]
 						changed_profiles[profile]<<pred
 					end
-					pred.to_cutout
 					Agent.transformer_agents.each do |ag|
 						ag.run_inline(pred) if pred.runnable_by?(ag)
 					end

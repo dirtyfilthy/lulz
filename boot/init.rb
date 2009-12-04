@@ -28,7 +28,6 @@ require "base/models/markov_agent_run_profile.rb"
 require "base/models/markov_produced_predicate.rb"
 require "base/cli.rb" if Lulz::USE_CLI
 require "base/resources.rb"
-IdentityBayes.set_database(SQLITE3_DB);
 
 module Lulz
 	ERROR_LOG=Logger.new "#{LULZ_DIR}/log/error.log"

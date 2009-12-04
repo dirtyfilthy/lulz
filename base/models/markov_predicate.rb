@@ -15,9 +15,12 @@ class MarkovPredicate < ActiveRecord::Base
 			ret=MarkovPredicate.find :first, :conditions => hash
 			ret=MarkovPredicate.create hash if ret.nil?
 		rescue SQLite3::BusyException
+			puts "sleep"
 			sleep 0.2
+			
 			retry
 		rescue ActiveRecord::StatementInvalid
+			puts "sleep"
 			sleep 0.2
 			retry
 		rescue 
