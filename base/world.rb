@@ -1,5 +1,4 @@
 require 'monitor'
-require 'zaml'
 module Lulz
 	class World
 

@@ -280,7 +280,7 @@ module Lulz
 					puts e
 					puts e.backtrace.join("\n")
 				end
-				sleep 0.5 unless Agent.running_agents.keys.empty?	
+				sleep 1 unless Agent.running_agents.keys.empty?	
 				@@personal_info_mutex.synchronize {
 					@@recalc_queue.shift
 				}
