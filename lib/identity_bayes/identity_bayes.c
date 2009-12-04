@@ -81,6 +81,7 @@ typedef struct {
   char *obj2_string;
   unsigned char match_type;
   MatchResult *match_result;
+  mpq_t likelyhood_ratio; 
   int same;
   int different;
 } Evidence;
@@ -360,7 +361,7 @@ static void get_evidentual_matches(MatchResult *result, Evidence *e){
    #endif
 
    if(e->match_result!=NULL){
-       #ifdef DEBUG
+    #ifdef DEBUG
 	 printf("using cached match\n");
 	 fflush(stdout);
       #endif
@@ -384,6 +385,12 @@ static void get_evidentual_matches(MatchResult *result, Evidence *e){
 	if(e_cache){
 		result->same=e_cache->same;
 		result->different=e_cache->different;
+				
+    #ifdef DEBUG
+	 printf("using ECACHED match\n");
+	 fflush(stdout);
+      #endif
+		return;
 	}
 
    pred_copy_1=memcpy((PredicateCutout *) malloc(sizeof(PredicateCutout)), e->pred_1, sizeof(PredicateCutout));
@@ -589,6 +596,26 @@ void get_total_evidence(MatchResult *out){
    out->same=total_match_cache->same;
    out->different=total_match_cache->different;
 
+}
+
+void set_likelyhood_ratio(Evidence *e){
+   mpq_t evidence_given_same, evidence_given_different, same_X_prior,temp_1, one_minus_prior;
+   MatchResult match_result;
+   MatchResult total_matches;
+   MatchResult total_evidence;
+   mpq_init(evidence_given_same);
+   mpq_init(evidence_given_different);
+	mpq_init(e->likelyhood_ratio);
+	get_total_evidence(&total_evidence);
+	get_evidentual_matches(&match_result,e);
+		
+   mpq_set_ui(evidence_given_same,match_result.same,total_evidence.same);
+   mpq_set_ui(evidence_given_different,match_result.different,total_evidence.different);
+   mpq_canonicalize(evidence_given_same);
+   mpq_canonicalize(evidence_given_different);
+	mpq_div(e->likelyhood_ratio,evidence_given_same,evidence_given_different);	
+	mpq_clear(evidence_given_same);
+	mpq_clear(evidence_given_different);	
 }
 
 void calculate_posterior_probability(mpq_t posterior, mpq_t prior, Evidence *e){
@@ -957,7 +984,7 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
    double retval;
    MatchResult total_matches;  
    int person_1_len, person_2_len;  
-   mpq_t prior,result,highest,influence,posterior;
+   mpq_t prior,result,highest,influence,posterior, one_minus_prior, temp;
    char *str_match_1;
 	char *str_match_2;
    char *t1;
@@ -978,7 +1005,9 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
    mpq_init(result);
    mpq_init(highest);
 	mpq_init(influence);
-	mpq_init(posterior);	
+	mpq_init(posterior);
+	mpq_init(one_minus_prior);
+	mpq_init(temp);	
     #ifdef DEBUG
       printf("getting total match\n");
       fflush(stdout);
@@ -1030,7 +1059,7 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
 
 	 
 	 evidence[i][j]=e;
-
+		set_likelyhood_ratio(e);
       }
    }
 	sqlite3_commit();
@@ -1052,7 +1081,6 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
       high_2=-2;
 	   
       mpq_set_ui(highest,0,1);
-      mpq_set(posterior,prior);
       /* find the most influential piece of evidence */
       
       for(i=0;i<person_1_len;i++){
@@ -1066,18 +1094,15 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
 
 					continue;
 				}
-				calculate_posterior_probability(result,prior,evidence[i][j]);
-				mpq_sub(influence,prior,result);
+				mpq_sub(influence,MPQ_ONE,evidence[i][j]->likelyhood_ratio);
 				mpq_abs(influence,influence);
 				if(mpq_cmp(influence,highest)>0){
 					mpq_set(highest,influence);
-					mpq_set(posterior,result);
 					high_1=i;
 					high_2=j;
 				}	    
 			}
       }
-      mpq_set(prior,posterior);
      
 
       #ifdef DEBUG
@@ -1089,8 +1114,13 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
 	 /* nothing to see here */
 	 break;
       }
-
-      /* remove those predicates involved in the evidence from consideration */
+		/* update posterior */
+		mpq_mul(posterior, evidence[high_1][high_2]->likelyhood_ratio, prior);
+		mpq_sub(one_minus_prior,MPQ_ONE, prior);
+		mpq_add(temp, posterior, one_minus_prior);	
+	   mpq_div(posterior,posterior,temp);
+      mpq_set(prior,posterior);
+		/* remove those predicates involved in the evidence from consideration */
 	  
 	 str_match_1=strdup(evidence[high_1][high_2]->obj1_string);
 	 str_match_2=strdup(evidence[high_1][high_2]->obj2_string);
@@ -1111,7 +1141,8 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
 				strcmp(t2,str_match_2)==0 ||
 				(c1!=0 && (c1==clique_1 || c1==clique_2)) ||
 				(c2!=0 && (c2==clique_1 || c2==clique_2))
-			) {	
+			) {
+				mpq_clear(evidence[i][j]->likelyhood_ratio);	
 				free_evidence(evidence[i][j]);
 				evidence[i][j]=NULL;
 			}
@@ -1130,6 +1161,8 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
    mpq_clear(prior);
 	mpq_clear(posterior);
 	mpq_clear(influence);
+	mpq_clear(temp);
+	mpq_clear(one_minus_prior);
 	for(i=0;i<person_1_len;i++){
 		for(j=0;j<person_2_len;j++){
 			if(evidence[i][j]!=NULL){

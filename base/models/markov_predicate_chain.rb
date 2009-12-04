@@ -52,13 +52,13 @@ module Lulz
 			chain=nil
 			begin 
 				chain=MarkovPredicateChain.find :first, :conditions => h
-
+		
 				chain=MarkovPredicateChain.create(h) if chain.nil?
 			rescue SQLite3::BusyException
-				sleep 0.1
+				sleep 0.2
 				retry
 			rescue ActiveRecord::StatementInvalid
-				sleep 0.1
+				sleep 0.2
 				retry
 			end	
 			return chain

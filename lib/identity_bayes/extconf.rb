@@ -12,5 +12,5 @@ end
 
 have_library "gmp"
 have_library "sqlite3"
-
+$CFLAGS='-O3'
 create_makefile("identity_bayes")
