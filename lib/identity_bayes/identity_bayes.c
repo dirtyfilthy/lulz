@@ -653,8 +653,10 @@ void set_likelyhood_ratio(Evidence *e){
    mpq_init(evidence_given_different);
 	mpq_init(e->likelyhood_ratio);
 	get_total_evidence(&total_evidence);
-	get_evidentual_matches(&match_result,e);
-		
+	get_evidentual_matches(&match_result,e);	
+	if(match_result.different==0){
+		match_result.different=1;
+	}	
    mpq_set_ui(evidence_given_same,match_result.same,total_evidence.same);
    mpq_set_ui(evidence_given_different,match_result.different,total_evidence.different);
    mpq_canonicalize(evidence_given_same);
@@ -1145,9 +1147,15 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
 					#endif
 
 					continue;
+				
 				}
-				mpq_sub(influence,MPQ_ONE,evidence[i][j]->likelyhood_ratio);
-				mpq_abs(influence,influence);
+				mpq_set(influence,evidence[i][j]->likelyhood_ratio);
+				if(mpq_cmp(influence,MPQ_ONE)<0){
+					if(mpq_sgn(influence)==0){
+						mpq_set_ui(influence,1,1000000);
+					}
+					mpq_div(influence,MPQ_ONE,influence);
+				}
 				if(mpq_cmp(influence,highest)>0){
 					mpq_set(highest,influence);
 					high_1=i;

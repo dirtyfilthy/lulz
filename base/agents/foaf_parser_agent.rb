@@ -15,16 +15,20 @@ module Lulz
 
 
 		def process(pred)
-         url=pred.object
+         
+			url=pred.object
          subject=pred.subject
+			set_processed(url)
 			web=Agent.get_web_agent
          page=web.get(url)
 			xml=page.body
-         doc=REXML::Document.new xml
-         foaf_profile=subject
-         
-         person=doc.root.elements["foaf:Person"]
-			person.elements.each do |element|
+			
+			foaf_profile=subject
+         doc=Nokogiri::XML xml
+			person=doc.xpath("//foaf:Person").first
+			person.children.each do |element|
+				
+				puts "#{element.name}:#{element.text}"
 				case element.name
                when "nick"
                   a=Lulz::Alias.new(element.text)
@@ -40,18 +44,18 @@ module Lulz
                   e=EmailAddress.new(element.text)
                   brute_fact foaf_profile, :msn, e
                when "openid"
-                  u1=element.attributes["rdf:resource"]
-                  u=URI.parse(u1)
+						u1=element.attributes["rdf:resource"] rescue nil
+						u=URI.parse(u1) rescue nil
                   brute_fact u,:openid_url, true
                   brute_fact foaf_profile, :openid,u
                when "homepage"
                   u1=element.attributes["rdf:resource"]
-                  u=URI.parse(u1)
+						u=URI.parse(u1) rescue bil
                   brute_fact u,:homepage_url, true
                   brute_fact foaf_profile, :homepage_url,u
                when "weblog"
                   u1=element.attributes["rdf:resource"]
-                  u=URI.parse(u1)
+						u=URI.parse(u1) rescue nil
                   brute_fact u,:blog_url, true
                   brute_fact foaf_profile, :homepage_url,u
 					when "dateOfBirth"

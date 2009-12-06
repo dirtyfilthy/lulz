@@ -28,7 +28,6 @@ module Lulz
                end
             end
          else
-            Agent.personal_info_mutex.synchronize {
             set_processed(pred.subject)
             pred.subject._predicates.each do |p1|
                next unless p1.object.is_a?(URI)
@@ -45,7 +44,6 @@ module Lulz
                   end
                end
             end
-            }
          end
 
       end           

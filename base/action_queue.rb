@@ -1,4 +1,3 @@
-require "#{LULZ_DIR}/lib/algorithms.rb"
 module Lulz
 	class ActionQueue
 		
@@ -7,7 +6,6 @@ module Lulz
 			@list=[]
 			@keys={}
 			block ||= lambda { |x, y| (x <=> y) == 1 }
-			@heap = Containers::Heap.new(&block)
 			@mutex=Mutex.new
 			@dirty_preds=[]
 			@score_cache={}

@@ -4,6 +4,7 @@ module Lulz
 		attr_reader :produced_predicates
 		attr_accessor :produced_matches
 		attr_reader :from_predicate
+		attr_reader :status
 		@@agents=[]
 		@@transformer_agents=[]
 		@@searcher_agents=[]
@@ -19,6 +20,7 @@ module Lulz
 			@produced_matches=0
 			@start_time=nil
 			@end_time=nil
+			@status="N"
 		end
 
 		def set_clique(pred1,pred2)
@@ -26,7 +28,10 @@ module Lulz
 		end	
 
 		def self.running_agents
-			stopped=@@running_agents.keys.select { |agent| (@@running_agents[agent].nil? or (!@@running_agents[agent].alive? rescue true))}
+			stopped=@@running_agents.keys.select { |agent| 
+				dead=!@@running_agents[agent].alive? rescue true
+				dead
+			}
 			stopped.each { |dead| @@running_agents.delete(dead) }
 			return @@running_agents
 		end
@@ -34,7 +39,7 @@ module Lulz
 		def self.list_agents
 			self.running_agents.keys.each do |a| 
 
-				puts "#{a.class.to_s} (#{a.time_running_secs} secs)"
+				puts "#{a.status} #{a.class.to_s} (#{a.time_running_secs} secs)"
 			end
 		end
 
@@ -45,7 +50,6 @@ module Lulz
 		def self.run_inline(pred)
 			a=self.new(World.instance)
 			p=pred
-		  	
 				a.set_processed(pred)
 				begin
 					Blackboard.instance.status_agent(self)
@@ -85,6 +89,7 @@ module Lulz
 				b.created_predicates[p]||=[]
 				b.created_predicates[p]<<a
 				@@running_agents.delete(a)
+				ActiveRecord::Base.clear_active_connections!
 			}
 
 			@@running_agents[agent]=thread
@@ -97,7 +102,7 @@ module Lulz
 		end
 
 		def run(pred)
-
+			@status="R"
 			@from_predicate=pred
 			@start_time=Time.now
 			@from_predicate.ran_by << self
@@ -288,6 +293,7 @@ module Lulz
 		end
 
 		def process_predicates
+			@status="P"
 			changed_profiles={}
 
 				t=Time.now
@@ -299,6 +305,7 @@ module Lulz
 					@last_profile_object=@from_predicate.object
 
 				end
+
 				@produced_predicates.each do |pred|
 					next if pred.nil?
 					pred.created_from=@from_predicate.created_from.clone.push(@from_predicate) unless @from_predicate.nil?
@@ -311,6 +318,7 @@ module Lulz
 						changed_profiles[profile]<<pred
 					end
 					Agent.transformer_agents.each do |ag|
+								
 						ag.run_inline(pred) if pred.runnable_by?(ag)
 					end
 					Blackboard.instance.action_queue.add_dirty_predicate(pred)

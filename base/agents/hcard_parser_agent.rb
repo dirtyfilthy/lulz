@@ -10,27 +10,30 @@ module Lulz
 			
          set_processed subject
          html=subject.html_page
-         hcard=HCard.find :text => html
          # TODO: this is cheap and nasty, i need to parse the author of blog properly... later :)
-         
-	      hcard=hcard[1] if hcard.is_a? Array and subject.is_a? IdenticaProfile # identica is weird
-	      hcard=hcard.first if hcard.is_a? Array
-         unless hcard.nil?
-            alias_o=Alias.new(hcard.nickname) rescue nil
-            country=Country.new(hcard.adr.country_name) rescue nil
-            country_l=Country.new(hcard.adr.locality) rescue nil
+			page=Nokogiri::HTML(html)
+			vcard=page.css(".vcard").first 
+			hcard=nil
+			unless vcard.nil?
+
+            alias_o=Alias.new(vcard.css(".nickname").first.text) rescue nil
+            country=Country.new(vcard.css(".adr .country_name").first.text) rescue nil
+            country_l=Country.new(vcard.css(".adr .locality").first.text) rescue nil
             bio=Bio.new(hcard.note) rescue nil 
             country=country_l if country.blank? and not country_l.blank?
             locality=nil
-            locality=Locality.new(hcard.adr.locality) rescue nil if country_l.blank? 
-            url=URI.parse(hcard.url) rescue nil
-            picture=URI.parse(hcard.logo) rescue nil
-            firstname=hcard.fn rescue ""
-            lastname=hcard.ln rescue ""
+            locality=Locality.new(vcard.css(".adr .locality").first.text) rescue nil if country_l.blank? 
+            vcard.css(".url").each do |u| 
+					href=URI.parse(u.attributes["href"].to_s) rescue nil
+					#pp href	
+					brute_fact subject,:homepage_url,href
+				end
+            picture=URI.parse(vcard.css(".logo").first.attributes["href"].to_s) rescue nil
+            firstname=vcard.css(".fn").first.text rescue ""
+				lastname=vcard.css(".ln").first.text rescue ""
             name=Name.new("#{firstname} #{lastname}".strip)
             brute_fact_once subject, :name,  name
             single_fact_once subject, :country, country
-            brute_fact_once subject, :homepage_url, url
             brute_fact_once subject, :username, alias_o
             single_fact_once subject, :city, locality
             brute_fact_once subject, :picture, picture

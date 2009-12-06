@@ -1,8 +1,7 @@
 $: << File.dirname( __FILE__) 
-
+$: << LULZ_DIR
 require 'rubygems' if Lulz::USE_CLI
 require 'web/setup.rb' unless Lulz::USE_CLI
-require 'lib/text'
 require 'mechanize'
 require 'logger'
 require 'active_record'

@@ -45,13 +45,16 @@ module Lulz
 			number=filez.last.split(".").last.to_i rescue 0
 			number=number+1
 			number=sprintf("%04d",number)
+			@mutex=nil
 			File.open("#{LULZ_DIR}/data/world.#{number}", 'w') do |out|
 				   Marshal.dump(self, out)
 			end
+			@mutex=Monitor.new
 		end
 
 		def self.load(file)
 			@@real_world=ZAML.load_file(file)
+			@mutex=Monitor.new
 		end
 		def sorted_profiles
 			sorted=self.profiles.clone.sort { |a1,b1| matches[a1].to_f <=> matches[b1].to_f }.reverse
@@ -343,14 +346,12 @@ module Lulz
 		end
 
 		def add(obj)
-			@mutex.synchronize {
 				unless @objects.key?(obj)
 					obj.person_id if obj.is_a? Profile
 					@objects[obj]=obj
 
 					@object_create_callback.call(obj) unless @object_create_callback.nil?
 				end
-			}
 		end
 
 		def unclean(obj)
@@ -371,7 +372,6 @@ module Lulz
 				normalize_predicate!(p)
 				return nil if @predicate_exists.key?(p.short_s)
 				return nil if p.object.blank?
-				p._world=self
 				@predicates << p
 				@predicate_exists[p.short_s]=true
 
@@ -384,7 +384,7 @@ module Lulz
 				@predicates_by_object[p.object] ||= []
 				@predicates_by_object[p.object] << p
 			}
-			@predicate_add_callback.call(p) unless @predicate_add_callback.nil?
+				@predicate_add_callback.call(p) unless @predicate_add_callback.nil?
 			return p
 		end
 
@@ -416,8 +416,8 @@ module Lulz
 			normal=nil 
 			@mutex.synchronize{
 				normal=@objects[obj] unless @objects[obj].nil?
-				add obj if normal.nil? 
-				normal=obj if normal.nil?
+			add obj if normal.nil? 
+			normal=obj if normal.nil?
 			}
 			return normal
 		end
