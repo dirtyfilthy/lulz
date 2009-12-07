@@ -41,11 +41,13 @@ module Lulz
 
 		def save
 			filez=Dir.glob("#{LULZ_DIR}/data/world.*")
-			filez.sort {|a,b| a<=>b }
+			filez.sort! {|a,b| a<=>b }
 			number=filez.last.split(".").last.to_i rescue 0
 			number=number+1
 			number=sprintf("%04d",number)
 			@mutex=nil
+			filename="#{LULZ_DIR}/data/world.#{number}"
+			puts "Saving world in #{filename}"
 			File.open("#{LULZ_DIR}/data/world.#{number}", 'w') do |out|
 				   Marshal.dump(self, out)
 			end

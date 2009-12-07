@@ -12,7 +12,9 @@ module Lulz
          set_processed pred
 	 email=pred.object
          a=email.to_s.split("@")[1]
+			return nil if a.nil?
 	 b=a.split(".")[0]
+	 return nil if b.nil?
 	 return if ["gmail","hotmail"].include? b
          pred2=brute_inference pred.subject, :derived_keyword, b      
 			set_clique pred,pred2

@@ -36,6 +36,12 @@ module Lulz
 			return @@running_agents
 		end
 
+		def self.kill_all
+			self.running_agents.values do |a|
+				a.kill rescue nil
+			end
+		end
+		
 		def self.list_agents
 			self.running_agents.keys.each do |a| 
 
@@ -285,7 +291,7 @@ module Lulz
 					puts e
 					puts e.backtrace.join("\n")
 				end
-				sleep 1 unless Agent.running_agents.keys.empty?	
+				# sleep 0.5 unless Agent.running_agents.keys.empty?	
 				@@personal_info_mutex.synchronize {
 					@@recalc_queue.shift
 				}

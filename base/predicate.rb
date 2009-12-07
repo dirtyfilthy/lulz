@@ -86,6 +86,7 @@ module Lulz
 			@ran_by=[]
 			@clique=0
 			@tested_agents=[]
+			@user_match=false
 		end
 
 		def expand

@@ -40,10 +40,10 @@ module Lulz
          brute_fact xfire_profile, :username, Alias.new(info["Username:"])
          brute_fact xfire_profile, :nickname, Alias.new(info["Nickname:"])
          single_fact xfire_profile, :country, Country.new(info["Location:"])
-         brute_fact xfire_profile, :age, Age.new(info["Age:"])
-         brute_fact xfire_profile, :sex, Sex.new(info["Gender:"])
+         single_fact xfire_profile, :age, Age.new(info["Age:"])
+         single_fact xfire_profile, :sex, Sex.new(info["Gender:"])
          brute_fact xfire_profile, :gamer_style, info["Gaming Style:"]
-         brute_fact xfire_profile, :name, Name.new(info["Real Name:"])
+         single_fact xfire_profile, :name, Name.new(info["Real Name:"])
 
          set_processed url
          return

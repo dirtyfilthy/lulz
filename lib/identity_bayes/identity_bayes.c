@@ -26,6 +26,7 @@ static int relationship_sym;
 static int id_sym;
 static int clique_sym;
 
+
 static sqlite3 *db;
 static sqlite3 *hd_db;
 static mpq_t MPQ_ONE;
@@ -36,6 +37,7 @@ typedef struct {
    int relationship_db_id;
    int created_by_db_id;
 	int clique;
+	int is_single_fact;
 } PredicateCutout;
 
 typedef struct  {
@@ -93,7 +95,9 @@ typedef struct {
   char *obj1_string;
   char *obj2_string;
   unsigned char match_type;
+  unsigned char is_single_fact;
   MatchResult *match_result;
+  
   mpq_t likelyhood_ratio; 
   int same;
   int different;
@@ -888,7 +892,12 @@ static void hard_ruby_predicate_2_predicate_cutout(VALUE rb_predicate, Predicate
       fflush(stdout);
    #endif 
    s2=rb_ivar_get(rb_predicate,type_sym);
-
+	if(s2==ID2SYM(rb_intern("single_fact"))){
+		p->is_single_fact=1;
+	}
+	else{
+		p->is_single_fact=0;
+	}
    #ifdef DEBUG
       printf("filled!\n");
       fflush(stdout);
@@ -961,7 +970,7 @@ Evidence *rb_predicates_to_evidence(VALUE rb_pred_1, VALUE rb_pred_2){
       fflush(stdout);
    #endif
 
-
+	e->is_single_fact=(p1->is_single_fact && p2->is_single_fact && p1->object_type_db_id==p2->object_type_db_id && p1->relationship_db_id==p2->relationship_db_id);
    e->match_type=get_match_type(e);
   
 
@@ -1016,8 +1025,10 @@ static VALUE method_save_match(VALUE self, VALUE person_1, VALUE person_2, VALUE
    for(i=0;i<person_1_len;i++){
       for(j=0;j<person_2_len;j++){
 	 e=rb_predicates_to_evidence(person_1_ary[i],person_2_ary[j]);
-	 find_or_create_or_update_evidence(e,1,match);
-	 update_evidence(-979,match);
+	 if(!(e->match_type==MATCH_NONE && !e->is_single_fact)){
+		find_or_create_or_update_evidence(e,1,match);
+		update_evidence(-979,match);
+	 }
 	 free_evidence(e);	 
       }
    }
@@ -1106,7 +1117,12 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
 
 	      
 	 e=rb_predicates_to_evidence(person_1_ary[i],person_2_ary[j]);
-	 #ifdef DEBUG
+	 if(e->match_type==MATCH_NONE && !e->is_single_fact){
+		evidence[i][j]=NULL;
+		free_evidence(e);
+		continue;
+	 } 
+	#ifdef DEBUG
 	    printf("created evidence! %d %d\n",i,j);
 	    fflush(stdout);
 	 #endif

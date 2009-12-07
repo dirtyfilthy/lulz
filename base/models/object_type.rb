@@ -5,9 +5,11 @@ class ObjectType < ActiveRecord::Base
       return @@name_cache[name] if @@name_cache.key?(name)
       begin
 			obj_type=ObjectType.find_or_create_by_name(name)
+		rescue SQLite3::BusyException
+			sleep 0.1
+			retry	
 		rescue ActiveRecord::StatementInvalid
 			sleep 0.1
-			puts "sleep"
 			retry
 		end
 

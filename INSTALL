@@ -1,4 +1,8 @@
-INSTALLATION INSTRUCTIONS
+lulz v0.02 INSTALLATION INSTRUCTIONS
+
+You can use lulz with ruby1.8.x or ruby 1.9.1, 1.9.0 will not work. 
+
+Release 0.02 breaks compatibility with the old database, you'll need to use the new lulz.sqlite3 file. 
 
 AS ROOT
 

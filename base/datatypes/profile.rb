@@ -5,7 +5,7 @@ module Lulz
       include Datatype
 
       attr_writer :is_match
-
+		attr_writer :user_match
       @@idz=0
 		@@cliquez=1
       @@id_mutex=Monitor.new

@@ -29,7 +29,7 @@ module Lulz
 	 name=html.scan(/<b>Name:<\/b><\/small><\/td><td>(.*?)<\/td>/).first.first rescue nil
 	 since=html.scan(/<b>Member Since:<\/b><\/small><\/td><td>(.*?)<\/td>/).first.first rescue nil 
 	 suburb=html.scan(/<b>Suburb:<\/b><\/small><\/td><td>(.*?)<\/td>/).first.first rescue nil
-	 brute_fact trademe_profile, :name, Name.new(name)
+	 single_fact trademe_profile, :name, Name.new(name)
 	 brute_fact trademe_profile, :locality, Locality.new(suburb)
 	 brute_fact trademe_profile, :member_since, since
 	 single_fact trademe_profile, :country, Country.new("nz")

@@ -45,16 +45,18 @@ module Lulz
 	    age=html.scan(/<span class="age">(.*?)<\/span>/).first.to_s rescue nil?
 	 end
 	 if age.blank?
-	    age=html.scan(/(\d+) years old/i).first.to_s rescue nil
+	    age=html.scan(/(\d+) years old/i).first.first.to_s rescue nil
 	 end
-	 region=html.scan(/<span class="region">(.*?)<\/span>/).first.to_s if region.blank? 	 
-         age=Age.new(age)
+	 if region.blank?
+		region=html.scan(/<span class="region">(.*?)<\/span>/).first.first.to_s rescue nil
+	 end     
+		age=Age.new(age)
          sex=Sex.new(sex)
 	      country=Country.new(country)
 	      locality=Locality.new(region)
 	      same_owner url,myspace_profile
          single_fact myspace_profile, :sex, sex
-			brute_fact myspace_profile, :name, Name.new(name)
+			single_fact myspace_profile, :name, Name.new(name)
 			single_fact myspace_profile, :alias, Alias.new(alias2) if alias_match!=alias2
          single_fact myspace_profile, :age, age
          brute_fact myspace_profile, :username, alias_o 

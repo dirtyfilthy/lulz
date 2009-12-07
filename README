@@ -16,9 +16,9 @@ Example search:
 
 Status Key:
 
-.	- running transformer
-=	- running parser
-*	- running search
+.		- running transformer
+=		- running parser
+*		- running search
 ?  	- performing identity resolution
 !  	- recalculating action queue
 W  	- queue empty, waiting

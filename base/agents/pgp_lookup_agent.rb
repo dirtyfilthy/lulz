@@ -28,7 +28,7 @@ module Lulz
 					name=line.scan(/([a-zA-Z][^&>]+)&lt;/).first.first.to_s rescue nil
 					brute_fact pgp_profile, :email, EmailAddress.new(email)
 					set_processed email
-					brute_fact pgp_profile, :name, Name.new(name)
+					single_fact pgp_profile, :name, Name.new(name)
 				end
 			end
 		end

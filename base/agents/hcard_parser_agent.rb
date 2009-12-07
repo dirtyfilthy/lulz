@@ -32,7 +32,7 @@ module Lulz
             firstname=vcard.css(".fn").first.text rescue ""
 				lastname=vcard.css(".ln").first.text rescue ""
             name=Name.new("#{firstname} #{lastname}".strip)
-            brute_fact_once subject, :name,  name
+            single_fact_once subject, :name,  name
             single_fact_once subject, :country, country
             brute_fact_once subject, :username, alias_o
             single_fact_once subject, :city, locality

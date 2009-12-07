@@ -54,8 +54,9 @@ module Lulz
 		  single_fact vbulletin_profile, :date_of_birth, BirthDate.new(value)
 	    
 	       when "home page"
+				 url=value.scan(/<a href="(.*?)"/).first.first rescu nil
 				 url=URI.parse(url) rescue nil
-		  brute_fact vbulletin_profile, :homepage_url, value
+				 brute_fact vbulletin_profile, :homepage_url, value
 		 end
 	 end
 	 

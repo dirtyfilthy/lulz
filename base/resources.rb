@@ -11,8 +11,8 @@ module Lulz
 
          if method =~ /^get_/
             resource_type = method.gsub(/^get_/,"")
-            list=@@resources["#{resource_type}s".to_sym]
-            r=OpenStruct.new(list[rand(list.length)]) rescue nil
+				list=@@resources["#{resource_type}s".to_sym]
+				r=OpenStruct.new(list[rand(list.length)]) rescue nil
             return r
          end
       end

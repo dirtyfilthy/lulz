@@ -42,7 +42,7 @@ module Lulz
                profile.linkedin_url=URI.parse(href)
                
                brute_fact profile, :linkedin_url, URI.parse(href)
-               brute_fact profile, :name, target
+               single_fact profile, :name, target
                industry=Industry.new(industry.strip)
                brute_fact profile, :industry, industry
                country=Country.new(location)

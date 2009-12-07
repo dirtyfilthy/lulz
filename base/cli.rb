@@ -61,7 +61,10 @@ module Lulz
 	   opts.on "-T","--timeout SECONDS",Integer,"stop search after SECONDS (0 for no timeout)" do |t|
                options[:timeout]=t
             end
- 
+		 
+	   opts.on "-h","--hard-timeout SECONDS",Integer,"hard stop search after SECONDS (0 for no timeout)" do |t|
+               options[:hard_timeout]=t
+            end
 		
 
 	    opts.on "-d","--disable-agent AGENT", "disable this agent from running, i.e. -d GoogleSearchAgent" do |agent|
@@ -328,6 +331,7 @@ module Lulz
             idz << profile.person_id.to_s
          end
 	      split_match=user_matches.split(" ")
+			split_match.each {|m| profiles_hash[m].user_match=true}
 	      pp split_match
 	      pp user_matches 
 	      pp split_match 

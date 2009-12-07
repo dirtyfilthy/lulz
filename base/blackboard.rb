@@ -65,12 +65,20 @@ module Lulz
 			single_threaded=(options[:single_thread]===true)
 			waited=0
 			Thread.current.priority=4
-			timeout=options[:timeout]
+			timeout=options[:timeout].to_i
+			hard_timeout=options[:hard_timeout].to_i
 			has_timeout=false
 			start=Time.now
 			while true do
 				num_threads=Agent.running_agents.keys.length
+				
+				if timeout!=0 and Time.now>(start+timeout)
+					has_timeout=true
+				end
 
+				if hard_timeout!=0 and Time.now>(start+hard_timeout)
+					break;
+				end
 				if has_timeout
 					next_action=nil
 				else
@@ -94,10 +102,6 @@ module Lulz
 				end
 				next if has_timeout
 				waited=0 
-				if timeout!=0 and Time.now>(start+timeout)
-					has_timeout=true
-					next
-				end
 
 				agent_klass, pred = next_action
 				next_action=nil
@@ -117,6 +121,8 @@ module Lulz
 
 				end
 			end
+			@recalculator.kill
+			Agent.kill_all
 			@world.update_match_scores
 			@queue_empty_callback.call unless @queue_empty_callback.nil?
 		end

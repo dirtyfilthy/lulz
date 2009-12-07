@@ -32,7 +32,7 @@ module Lulz
          brute_fact phpbb_profile, :profile_url, url
          #username=html.scan(/Viewing (.*?)'s Profile/i).first.first rescue nil
 	 #if username.nil?
-	    username=html.scan(/Viewing profile :: (.*?)<\/th>/).to_s
+			username=html.scan(/Viewing profile :: (.*?)<\/th>/).first.first rescue nil
 	    username.gsub!(/<.*?>/,"")
 	 #end
 	 brute_fact phpbb_profile, :username, username

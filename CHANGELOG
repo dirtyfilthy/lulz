@@ -1,0 +1,10 @@
+0.02	simplified predicate cutout to cut down on statespace size
+		lots more caching in identity bayes (much faster)
+		facebook public profile parser
+		ruby1.9.1 compatability
+		moved hresume & hcard parser from mofo to nokogiri
+		fixed bug with active_record connection pool exhaustion
+		name is now single_fact
+		world now saved in match mode
+
+0.01	initial rollout

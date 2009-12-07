@@ -37,7 +37,7 @@ module Lulz
             single_fact bebo_profile, :age, age
             single_fact bebo_profile, :country, country
             brute_fact bebo_profile, :username, alias_o 
-            brute_fact bebo_profile, :name, name
+            single_fact bebo_profile, :name, name
             set_processed url
 
          return
