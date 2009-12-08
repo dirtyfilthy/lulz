@@ -330,7 +330,7 @@ module Lulz
             profiles_hash[profile.person_id.to_s]=profile
             idz << profile.person_id.to_s
          end
-	      split_match=user_matches.split(" ")
+	      split_match=user_matches.split(" ").uniq
 			split_match.each {|m| profiles_hash[m].user_match=true}
 	      pp split_match
 	      pp user_matches 
