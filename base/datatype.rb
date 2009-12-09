@@ -120,7 +120,7 @@ module Lulz
 			return self.#{attr}.blank?
 		end
 
-		CODE
+CODE
 	module_eval(code)
 
 	end
