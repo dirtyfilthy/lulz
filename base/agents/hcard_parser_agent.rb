@@ -12,7 +12,8 @@ module Lulz
          html=subject.html_page
          # TODO: this is cheap and nasty, i need to parse the author of blog properly... later :)
 			page=Nokogiri::HTML(html)
-			vcard=page.css(".vcard").first 
+			vcard=page.css(".vcard.author").first 
+			vcard=page.css(".vcard") if vcard.nil?
 			hcard=nil
 			unless vcard.nil?
 
