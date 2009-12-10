@@ -24,7 +24,7 @@ module Lulz
             country=country_l if country.blank? and not country_l.blank?
             locality=nil
             locality=Locality.new(vcard.css(".adr .locality").first.text) rescue nil if country_l.blank? 
-            vcard.css(".url").each do |u| 
+            vcard.css('.url[rel~=me]').each do |u| 
 					href=URI.parse(u.attributes["href"].to_s) rescue nil
 					#pp href	
 					brute_fact subject,:homepage_url,href
