@@ -62,7 +62,7 @@ module Lulz
                options[:timeout]=t
             end
 		 
-	   opts.on "-h","--hard-timeout SECONDS",Integer,"hard stop search after SECONDS (0 for no timeout)" do |t|
+	   opts.on "-H","--hard-timeout SECONDS",Integer,"hard stop search after SECONDS (0 for no timeout)" do |t|
                options[:hard_timeout]=t
             end
 		
