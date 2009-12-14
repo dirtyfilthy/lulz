@@ -11,6 +11,7 @@
 #define MATCH_NONE 0
 #define MATCH_PARTIAL 1
 #define MATCH_FULL 2
+#define DEBUG
 static int subject_sym;
 static int  object_sym;
 static int  object_id_sym;
@@ -970,7 +971,7 @@ Evidence *rb_predicates_to_evidence(VALUE rb_pred_1, VALUE rb_pred_2){
       fflush(stdout);
    #endif
 
-	e->is_single_fact=(p1->is_single_fact && p2->is_single_fact && p1->object_type_db_id==p2->object_type_db_id && p1->relationship_db_id==p2->relationship_db_id);
+	e->is_single_fact=(p1->relationship_db_id==p2->relationship_db_id);
    e->match_type=get_match_type(e);
   
 
@@ -1144,7 +1145,8 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
    
    for(c=0;c<iterations;c++){
       #ifdef DEBUG
-	    printf("iterator %d",c);
+	    printf("iterator %d\n",c);
+	     mpq_out_str (stdout, 10, prior);
 	    fflush(stdout);
       #endif
       high_1=-1;
@@ -1176,6 +1178,12 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
 					mpq_set(highest,influence);
 					high_1=i;
 					high_2=j;
+					#ifdef DEBUG
+           				 printf("new highest\n",c);
+             				mpq_out_str (stdout, 10, evidence[i][j]->likelyhood_ratio);
+            				printf("pred_1 %d, pred_2 %d mtch %d",evidence[i][j]->pred_1->id, evidence[i][j]->pred_2->id, evidence[i][j]->match_type);
+					fflush(stdout);
+      					#endif
 				}	    
 			}
       }
@@ -1191,6 +1199,12 @@ static VALUE method_calculate_match(VALUE self, VALUE person_1, VALUE person_2){
 	 break;
       }
 		/* update posterior */
+		
+      #ifdef DEBUG
+	    printf("likelyhood\n");
+	     mpq_out_str (stdout, 10, evidence[high_1][high_2]->likelyhood_ratio);
+	    fflush(stdout);
+      #endif
 		mpq_mul(posterior, evidence[high_1][high_2]->likelyhood_ratio, prior);
 		mpq_sub(one_minus_prior,MPQ_ONE, prior);
 		mpq_add(temp, posterior, one_minus_prior);	

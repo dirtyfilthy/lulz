@@ -13,9 +13,14 @@ module Lulz
 	 email=pred.object
          a=email.to_s.split("@")[1]
 			return nil if a.nil?
-	 b=a.split(".")[0]
+	 tld=a.split(".").last
+	 if ["com","org","info","net"].include? tld
+		b=a.split(".")[-2] rescue nil
+	 else
+		 b=a.split(".")[-3] rescue nil 
+	 end
 	 return nil if b.nil?
-	 return if ["gmail","hotmail"].include? b
+	 return if ["gmail","hotmail","mail"].include? b
          pred2=brute_inference pred.subject, :derived_keyword, b      
 			set_clique pred,pred2
 		end
