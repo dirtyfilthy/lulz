@@ -6,5 +6,6 @@
 		fixed bug with active_record connection pool exhaustion
 		name is now single_fact
 		world now saved in match mode
+		fix for order_predicates acting randomly
 
 0.01	initial rollout
