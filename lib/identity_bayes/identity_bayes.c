@@ -845,24 +845,32 @@ void free_evidence(Evidence *e){
 }
 
 static void hard_ruby_predicate_2_predicate_cutout(VALUE rb_predicate, PredicateCutout *p){
-   const char *subject;
-   const char *object;
-   const char *relationship;
    VALUE r2,s2;
    VALUE cutout;
+	VALUE object;
    /* int obj_id=FIX2INT(rb_ivar_get(rb_predicate,obj_id_sym))->ptr; */
    const char *creator;
    char *extra;
    #ifdef DEBUG
       printf("in hard_ruby\n");
       extra=RSTRING_PTR(rb_funcall(rb_predicate,to_s_sym,0));
+
       printf("processing predicate %s \n", extra);
-      fflush(stdout);
-   #endif
+      object=rb_ivar_get(rb_predicate,object_sym);
+		
+		fflush(stdout);
+		extra=RSTRING_PTR(rb_funcall(object,to_s_sym,0));
+		
+		fflush(stdout);
+		printf("object %s \n", extra);
+		
+		fflush(stdout);
+	#endif
 
    cutout=rb_funcall(rb_predicate,to_cutout_sym,0);
    #ifdef DEBUG
       printf("after get cutout\n");
+		
       fflush(stdout);
    #endif 
    
@@ -916,6 +924,7 @@ Evidence *rb_predicates_to_evidence(VALUE rb_pred_1, VALUE rb_pred_2){
 	Evidence *e=(Evidence *) malloc(sizeof(Evidence));
    PredicateCutout *p1=(PredicateCutout *) malloc(sizeof(PredicateCutout));
    PredicateCutout *p2=(PredicateCutout *) malloc(sizeof(PredicateCutout));
+	PredicateCutout*temp;
    #ifdef DEBUG
       printf("in rb_predicates_to_evidence\n");
       fflush(stdout);
@@ -932,9 +941,14 @@ Evidence *rb_predicates_to_evidence(VALUE rb_pred_1, VALUE rb_pred_2){
    #endif
 
    
-   order_predicates(&p1,&p2);
-   e->pred_1=p1;
-   e->pred_2=p2;
+   if(p1->id < p2->id){
+		e->pred_1=p1;
+		e->pred_2=p2;
+	}
+	else{
+		e->pred_1=p2;
+		e->pred_2=p1;
+	}
 	e->obj1_string=strdup(RSTRING_PTR(rb_funcall(rb_ivar_get(rb_pred_1,object_sym),to_s_sym,0)));
 	e->obj2_string=strdup(RSTRING_PTR(rb_funcall(rb_ivar_get(rb_pred_2,object_sym),to_s_sym,0)));
 	e->obj1_string=trim(e->obj1_string);
