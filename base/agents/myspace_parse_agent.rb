@@ -18,7 +18,7 @@ module Lulz
 			web=Agent.get_web_agent
          page=web.get(url)
          html=page.body
-         
+			 
          alias_match=html.scan(/<link rel="canonical" href="http:\/\/www.myspace.com\/([a-z0-9_-]+)/).first.first rescue nil
          
 			#name,alias2=html.scan(/([a-zA-Z0-9_-]+) \(([a-zA-Z0-9`'_- ]+)\) \| MySpace/).first rescue [nil, nil]    
@@ -29,7 +29,8 @@ module Lulz
          set_processed url         
          myspace_profile=MyspaceProfile.new
          myspace_profile.url=canonical_url
-         brute_fact myspace_profile, :profile_url, canonical_url
+         myspace_profile.html_page=html
+			brute_fact myspace_profile, :profile_url, canonical_url
          alias_o=Alias.new(alias_match) rescue nil
 	      sex, age, region, country = html.scan(/(Male|Female).*?<br.*?>(\d+) years old.*?<br.*?>(.*?)<br.*?>(.*?)<br.*?>/mi)[0]
          if country.blank?

@@ -139,7 +139,7 @@ module Lulz
 				s<<ps
 				collections[c].each do |pred|
 					unless obj.class.sub_objects_to_a.include? pred.name
-						s2+="#{pred.object.to_text.strip}\n"
+						s2="#{pred.object.to_text.strip}\n"
 					else 
 						s2="===> #{pred.object.properties_to_h.inspect}\n"
 						s2+=indent_lines(predicates_to_text(pred.object),4,true)
