@@ -7,8 +7,11 @@
 		name is now single_fact
 		world now saved in match mode
 		fix for order_predicates acting randomly
-		added analysis framework
-		twitter grabber
-		trademe grabber 
+		added analysis framework:
+			twitter grabber
+			trademe grabber 
+			myspace blog grabber
+			blog post zeitgeist
+			blog posts by hour
 
 0.01	initial rollout
