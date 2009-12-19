@@ -77,7 +77,7 @@ module Lulz
 				end
 
 
-				opts.on "-X","--xml", "run silently and output xml" do 
+				opts.on "-X","--xml", "run silently and output xml (also works in analysis mode)" do 
 					options[:xml]=true
 					options[:silent]=true
 				end
