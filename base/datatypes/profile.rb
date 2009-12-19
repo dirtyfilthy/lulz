@@ -123,8 +123,6 @@ module Lulz
 
 				ps="#{pred.name} => "
 				s << ps
-				puts obj.class.sub_objects_to_a.inspect
-				puts pred.name.inspect
 				unless obj.class.sub_objects_to_a.include? pred.name
 					s << pred.object.to_text << "\n"
 				else	
