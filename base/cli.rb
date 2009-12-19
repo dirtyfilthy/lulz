@@ -406,22 +406,10 @@ module Lulz
 
 		end
 
-		def self.to_xml
-			$KCODE = 'UTF8'
-			out=""
-			xml = Builder::XmlMarkup.new(:target=>out, :indent => 2)
-			xml.instruct!(:xml, :encoding => "UTF-8")
-			xml.profiles {
-				World.instance.profiles.sort{|a,b| a.person_id <=> b.person_id}.each do |profile|
-				xml.profile(:id => profile.person_id, :score => sprintf('%.3f',World.instance.matches[profile].to_f), :type=> profile.class.to_s.gsub("Lulz::","")) {
-					xml.graph_path {
-					World.instance.graph_path(profile).each do |path|
-					xml.profile(:id=>path.person_id)
-					end
-				}
-				xml.predicates {
+		def self.predicates_to_xml(xml,obj)
+		
 					collections={}
-					profile._predicates.each do |predicate|
+					obj._predicates.each do |predicate|
 						
 						next if predicate.object.class.archive_only? and !Blackboard.instance.options[:archive]
 						collect=predicate.object.class.collect_as_property
@@ -433,7 +421,16 @@ module Lulz
 						klass=predicate.object.class.to_s
 						klass.gsub!(/[A-Za-z]+::/,"")
 						xml.predicate(:relationship => predicate.name.to_s, :creator => predicate.creator.class.to_s.gsub("Lulz::",""),:type=>predicate.type.to_s){
-							xml.tag!(klass.downcase.to_sym,predicate.properties_to_h,predicate.object.to_s)
+														
+									unless obj.class.sub_objects_to_a.include? predicate.name
+										xml.tag!(klass.underscore.to_sym,predicate.object.properties_to_h,predicate.object.to_s)
+									else
+										xml.tag!(klass.underscore.to_sym,predicate.object.properties_to_h){
+											xml.predicates {
+												predicates_to_xml(xml,predicate.object)
+											}
+										}
+									end
 						}
 
 					end
@@ -449,11 +446,38 @@ module Lulz
 								klass=predicate.object.class.to_s
 								klass.gsub!(/[A-Za-z]+::/,"")
 								xml.predicate(:relationship => predicate.name.to_s, :creator => predicate.creator.class.to_s.gsub("Lulz::",""),:type=>predicate.type.to_s){
-									xml.tag!(klass.downcase.to_sym,predicate.object.properties_to_h,predicate.object.to_s)
+									unless obj.class.sub_objects_to_a.include? predicate.name
+										xml.tag!(klass.underscore.to_sym,predicate.object.properties_to_h,predicate.object.to_s)
+									else
+										
+										xml.tag!(klass.underscore.to_sym,predicate.object.properties_to_h){
+											xml.predicates {
+												predicates_to_xml(xml,predicate.object)
+											}
+										}
+									end
 								}
 							end
 						}
 					end
+		end
+		
+		
+		def self.to_xml
+			$KCODE = 'UTF8'
+			out=""
+			xml = Builder::XmlMarkup.new(:target=>out, :indent => 2)
+			xml.instruct!(:xml, :encoding => "UTF-8")
+			xml.profiles {
+				World.instance.profiles.sort{|a,b| a.person_id <=> b.person_id}.each do |profile|
+				xml.profile(:id => profile.person_id, :score => sprintf('%.3f',World.instance.matches[profile].to_f), :type=> profile.class.to_s.gsub("Lulz::","")) {
+					xml.graph_path {
+					World.instance.graph_path(profile).each do |path|
+					xml.profile(:id=>path.person_id)
+					end
+				}
+				xml.predicates {
+					predicates_to_xml(xml,profile)
 				}
 			}	
 		end

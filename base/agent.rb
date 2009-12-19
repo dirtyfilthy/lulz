@@ -14,7 +14,11 @@ module Lulz
 		@@personal_info_mutex=Mutex.new	
 		@@running_agents={}
 		@@process_mutex=Mutex.new
+		@@never_value=0
+
+
 		
+
 		def initialize(world)
 			self._world=world
 			@produced_predicates=[]
@@ -23,6 +27,7 @@ module Lulz
 			@end_time=nil
 			@status="N"
 		end
+
 
 		def set_clique(pred1,pred2)
 			Predicate.set_clique(pred1,pred2)

@@ -14,7 +14,6 @@ module Lulz
 				agent_types.each do |at|
 					if at.accepts?(pred)
 						agent=at.new(World.instance)
-					   	
 						begin
 							Blackboard.instance.status_agent(at)
 							agent.run(pred)

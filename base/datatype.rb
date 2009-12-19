@@ -1,13 +1,19 @@
 module Lulz
 	module Datatype
 		@@properties=[]
-
+		@@never=0
 		def self.included(base)
 			base.extend(ClassMethods)  
 		end
 
 		attr_writer :_lulz_unclean
-
+		
+		def never
+			n=0
+			@@never+=1
+			n=@@never
+			return n
+		end
 
 		def to_text
 			p=self.properties_to_h
@@ -139,6 +145,15 @@ module Lulz
 			def archive_only
 				module_eval("def self.archive_only?; return true; end")
 			end
+			
+			def sub_objects_to_a
+				[]
+			end
+
+			def sub_objects(*attrs)
+				module_eval("def self.sub_objects_to_a; #{attrs.inspect}; end")
+			end
+
 
 			def properties(*attrs)
 			props=self.properties_to_a

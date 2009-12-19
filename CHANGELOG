@@ -7,6 +7,8 @@
 		name is now single_fact
 		world now saved in match mode
 		fix for order_predicates acting randomly
-		added analysis framework 
+		added analysis framework
+		twitter grabber
+		trademe grabber 
 
 0.01	initial rollout
