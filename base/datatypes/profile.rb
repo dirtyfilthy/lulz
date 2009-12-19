@@ -79,6 +79,22 @@ module Lulz
 	false
       end
 
+		def indent_lines(lines,indent, indent_first=true)
+			str=""
+			first=true
+			lines.each_line do |line|
+				if first and !indent_first
+					first=false
+					str=str+line
+					next
+				end
+				str=str+(" "*indent)+line
+			end
+
+			return str
+		end
+		alias :indent :indent_lines
+
       def to_text
 		   path=""
 			world=World.instance
@@ -86,13 +102,56 @@ module Lulz
 		   gp.each { |node| path=path+"<-- [#{node.person_id}] " }
 			path="<-- [0] " if path.blank? 
          path="" if self.person_id==0
+			collections={}
 			s="#{self.class.to_s} [#{person_id}] (#{sprintf('%.3f',world.matches[self].to_f)}) #{path}\n"
-         self._predicates.each do |pred|
-            s << "   #{pred.name} => #{pred.object.to_s}\n"
-         end
-         s
+			s << indent(predicates_to_text(self),4)
+			s
       end
 
+
+		def predicates_to_text(obj)
+			s=""
+         collections={}
+			obj._predicates.each do |pred|
+				next if pred.object.class.archive_only? and !Blackboard.instance.options[:archive]
+				collect=pred.object.class.collect_as_property
+				unless collect.nil?
+					collections[collect]||=[]
+					collections[collect] << pred
+					next
+				end
+
+				ps="#{pred.name} => "
+				s << ps
+				puts obj.class.sub_objects_to_a.inspect
+				puts pred.name.inspect
+				unless obj.class.sub_objects_to_a.include? pred.name
+					s << pred.object.to_text << "\n"
+				else	
+					s << "#{pred.object.properties_to_h.inspect}\n"+indent_lines(predicates_to_text(pred.object),4,true)
+				end
+			end
+			collections.keys.each do |c|
+				ps="[#{c.to_s.upcase}] =>\n"
+				options=collections[c].first.class.collect_as_options
+				unless options[:order_by].nil?
+					collections[c].sort!{|a,b| a.object.send(options[:order_by]) <=> b.object.send(options[:order_by])}.reverse!
+					collections[c].reverse! if options[:reverse]
+				end
+				s<<ps
+				collections[c].each do |pred|
+					unless obj.class.sub_objects_to_a.include? pred.name
+						s2+="#{pred.object.to_text.strip}\n"
+					else 
+						s2="===> #{pred.object.properties_to_h.inspect}\n"
+						s2+=indent_lines(predicates_to_text(pred.object),4,true)
+					end
+					s<<indent_lines(s2,4,true)
+				end
+			end
+					
+         s
+		end
                
 
 

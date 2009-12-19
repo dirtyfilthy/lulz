@@ -1,5 +1,6 @@
 module Lulz
    class TrademeProfile < Profile
 	   equality_on :member_id
-   end
+		sub_objects :auction
+	end
 end
