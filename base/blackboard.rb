@@ -89,7 +89,6 @@ module Lulz
 				unless single_threaded
 					waited+=1 if next_action.nil? and num_threads<=0 and Agent.recalc_queue.empty?
 					Blackboard.instance.status("F") if num_threads>=max_threads
-					Agent.list_agents if num_threads>=max_threads
 					Blackboard.instance.status("W") if next_action.nil? and !has_timeout
 					Blackboard.instance.status("T") if next_action.nil? and has_timeout
 

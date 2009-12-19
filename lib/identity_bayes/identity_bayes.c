@@ -11,7 +11,6 @@
 #define MATCH_NONE 0
 #define MATCH_PARTIAL 1
 #define MATCH_FULL 2
-#define DEBUG
 static int subject_sym;
 static int  object_sym;
 static int  object_id_sym;
