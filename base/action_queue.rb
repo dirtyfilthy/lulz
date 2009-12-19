@@ -38,7 +38,7 @@ module Lulz
 			@rel_cache={}
 			to_add=[]
 			return if dirty_copy.empty?
-			agents=Agent.agents-Agent.transformer_agents-Blackboard.instance.options[:disabled_agents]
+			agents=Agent.agents-Agent.transformer_agents-Blackboard.instance.options[:disabled_agents]-Agent.analyzer_agents
 			st=0.0
 			ht=0.0
 			dirty_copy.each do |pred|

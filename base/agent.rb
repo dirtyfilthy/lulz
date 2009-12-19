@@ -10,6 +10,7 @@ module Lulz
 		@@searcher_agents=[]
 		@@parser_agents=[]
 		@@recalc_queue=[]
+		@@analyzer_agents=[]
 		@@personal_info_mutex=Mutex.new	
 		@@running_agents={}
 		@@process_mutex=Mutex.new
@@ -157,6 +158,10 @@ module Lulz
 			false
 		end
 
+		def self.analyzer?
+			false
+		end
+
 
 		def self.personal_info_mutex
 			@@personal_info_mutex
@@ -200,6 +205,14 @@ module Lulz
 			return (not subject._query_object(:first, :predicate => name).blank?)
 		end
 
+
+		def brute_fact_nomatch(subject,predicate,object)
+			pred=brute_fact subject,predicate,object
+			unless pred.nil?
+				pred.nomatch=true
+			end
+			return pred
+		end
 
 		def brute_fact(subject,predicate,object)
 			subject=normalize(subject)
@@ -366,6 +379,7 @@ module Lulz
 			transformer_agents.push(subclass).uniq! if subclass.transformer?
 			searcher_agents.push(subclass).uniq! if subclass.searcher?
 			parser_agents.push(subclass).uniq! if subclass.parser?
+			analyzer_agents.push(subclass).uniq! if subclass.analyzer?
 		end	
 
 		def self.agents
@@ -385,6 +399,9 @@ module Lulz
 		end
 
 
+		def self.analyzer_agents
+			@@analyzer_agents
+		end
 		def self.get_web_agent()
 			agent= WWW::Mechanize.new
 			#agent.set_proxy("localhost",3128)
@@ -496,6 +513,15 @@ module Lulz
 		end
 
 
+		def self.analyzer
+			class_eval %{
+				def self.analyzer?
+					true
+				end
+
+			}
+			@@analyzer_agents.push(self).uniq!
+		end
 
 		def self.accept_if_subject_method(method, options=[])
 

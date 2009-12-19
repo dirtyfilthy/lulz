@@ -1,5 +1,5 @@
 SQLITE3_DB="#{LULZ_DIR}/db/lulz.sqlite3"
-require "activerecord"
+require "active_record"
 module ActiveRecord
 	class Base
 		# sqlite3 adapter reuses sqlite_connection.

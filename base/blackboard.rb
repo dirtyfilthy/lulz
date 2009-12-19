@@ -23,6 +23,7 @@ module Lulz
 			status(".") if agent.transformer?
 			status("*") if agent.searcher?
 			status("=") if agent.parser?
+			status("A") if agent.analyzer?
 		end	
 
 		def sorted_profiles

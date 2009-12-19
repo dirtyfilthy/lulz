@@ -79,6 +79,21 @@ module Lulz
 	false
       end
 
+		def indent_lines(lines,indent, indent_first=true)
+			str=""
+			first=true
+			lines.each_line do |line|
+				if first and !indent_first
+					first=false
+					str=str+line
+					next
+				end
+				str=str+(" "*indent)+line.strip+"\n"
+			end
+
+			return str
+		end
+
       def to_text
 		   path=""
 			world=World.instance
@@ -86,10 +101,33 @@ module Lulz
 		   gp.each { |node| path=path+"<-- [#{node.person_id}] " }
 			path="<-- [0] " if path.blank? 
          path="" if self.person_id==0
+			collections={}
 			s="#{self.class.to_s} [#{person_id}] (#{sprintf('%.3f',world.matches[self].to_f)}) #{path}\n"
          self._predicates.each do |pred|
-            s << "   #{pred.name} => #{pred.object.to_s}\n"
+				next if pred.object.class.archive_only? and !Blackboard.instance.options[:archive]
+				collect=pred.object.class.collect_as_property
+				unless collect.nil?
+					collections[collect]||=[]
+					collections[collect] << pred.object
+					next
+				end
+
+            ps="   #{pred.name} => "
+				s << ps 
+				s << indent_lines(pred.object.to_text+"\n", ps.length, false)
          end
+			collections.keys.each do |c|
+				ps="   [#{c.to_s.upcase}] =>\n"
+				options=collections[c].first.class.collect_as_options
+				unless options[:order_by].nil?
+					collections[c].sort!{|a,b| a.send(options[:order_by]) <=> b.send(options[:order_by])}.reverse!
+					collections[c].reverse! if options[:reverse]
+				end
+				s<<ps
+				s2=collections[c].map{|obj| obj.to_text.strip}.join("\n")
+				s<<indent_lines(s2,8,true)
+			end
+					
          s
       end
 

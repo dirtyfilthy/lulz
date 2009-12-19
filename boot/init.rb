@@ -62,9 +62,13 @@ end
 # require base datatypes
 Dir.glob("#{LULZ_DIR}/base/datatypes/*.rb").each {|f| require f }
 Dir.glob("#{LULZ_DIR}/base/datatypes/profiles/*.rb").each {|f| require f }
+Dir.glob("#{LULZ_DIR}/base/datatypes/analysis/*.rb").each {|f| require f }
 # require base agents
 Lulz::start_db
+
 Dir.glob("#{LULZ_DIR}/base/agents/*.rb").each {|f| require f }
+
+Dir.glob("#{LULZ_DIR}/base/agents/analyzers/*.rb").each {|f| require f }
 b=Lulz::Blackboard.instance
 unless Lulz::USE_CLI
 	p=Lulz::Person.new
@@ -82,7 +86,9 @@ else
 		Lulz::CLI::to_xml
 		exit
 	end
+	puts
 	Lulz::CLI::summary(b) if b.options[:summary]
+	puts if b.options[:summary]
 	b.profiles.clone.sort{|a,b2| a.person_id <=> b2.person_id}.each { |p| 
 		next if matches[p].nil? or matches[p]<b.options[:match_threshold]; 
 		
