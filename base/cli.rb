@@ -420,22 +420,47 @@ module Lulz
 					end
 				}
 				xml.predicates {
+					collections={}
 					profile._predicates.each do |predicate|
+						
+						next if predicate.object.class.archive_only? and !Blackboard.instance.options[:archive]
+						collect=predicate.object.class.collect_as_property
+						unless collect.nil?
+							collections[collect]||=[]
+							collections[collect] << predicate
+							next
+						end
+						klass=predicate.object.class.to_s
+						klass.gsub!(/[A-Za-z]+::/,"")
+						xml.predicate(:relationship => predicate.name.to_s, :creator => predicate.creator.class.to_s.gsub("Lulz::",""),:type=>predicate.type.to_s){
+							xml.tag!(klass.downcase.to_sym,predicate.properties_to_h,predicate.object.to_s)
+						}
 
-					klass=predicate.object.class.to_s
-					klass.gsub!(/[A-Za-z]+::/,"")
-					xml.predicate(:relationship => predicate.name.to_s, :creator => predicate.creator.class.to_s.gsub("Lulz::",""),:type=>predicate.type.to_s){
-						xml.tag!(klass.downcase.to_sym,predicate.object.to_s)
-
-					}
-
-					end	
+					end
+					collections.keys.each do |c|
+						ps="   [#{c.to_s.upcase}] =>\n"
+						options=collections[c].first.object.class.collect_as_options
+						unless options[:order_by].nil?
+							collections[c].sort!{|a,b| a.object.send(options[:order_by]) <=> b.object.send(options[:order_by])}.reverse!
+							collections[c].reverse! if options[:reverse]
+						end
+						xml.tag!(c.to_s){
+							collections[c].each do |predicate|
+								klass=predicate.object.class.to_s
+								klass.gsub!(/[A-Za-z]+::/,"")
+								xml.predicate(:relationship => predicate.name.to_s, :creator => predicate.creator.class.to_s.gsub("Lulz::",""),:type=>predicate.type.to_s){
+									xml.tag!(klass.downcase.to_sym,predicate.object.properties_to_h,predicate.object.to_s)
+								}
+							end
+						}
+					end
 				}
-				}
-
-				end
-			}
-			puts out
+			}	
 		end
+		}
+
+		puts out
+		end
+		
 	end
 end

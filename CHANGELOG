@@ -1,11 +1,12 @@
 0.02	simplified predicate cutout to cut down on statespace size
 		lots more caching in identity bayes (much faster)
 		facebook public profile parser
-		ruby1.9.1 compatability
+		ruby1.9.1 compatibility
 		moved hresume & hcard parser from mofo to nokogiri
 		fixed bug with active_record connection pool exhaustion
 		name is now single_fact
 		world now saved in match mode
 		fix for order_predicates acting randomly
+		added analysis framework 
 
 0.01	initial rollout
