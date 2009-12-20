@@ -34,7 +34,9 @@ module Lulz
 
 		def top_profile
 			return subject if subject.is_a? Profile or subject.nil?
-			return subject.top_profile
+			puts created_from.last.to_s
+			return created_from.last.top_profile if created_from.last
+			return nil
 		end
 
 		def runnable_by?(agent)

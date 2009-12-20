@@ -13,13 +13,15 @@ module Lulz
 				pred=produced_predicates.pop
 				agent_types.each do |at|
 					if at.accepts?(pred)
-						agent=at.new(World.instance)
 						begin
+							agent=at.new(World.instance)
 							Blackboard.instance.status_agent(at)
 							agent.run(pred)
 						rescue Exception => e
 							puts e
+						   puts e.backtrace.join("\n")	
 						end
+						agent.process_predicates
 
 						produced_predicates=produced_predicates+agent.produced_predicates
 					end
