@@ -114,7 +114,7 @@ module Lulz
          collections={}
 			obj._predicates.each do |pred|
 				next if pred.object.class.archive_only? and !Blackboard.instance.options[:archive]
-				collect=pred.object.class.collect_as_property
+				collect=(pred.object.class.collect_as_property or pred.options[:collect_as])
 				unless collect.nil?
 					collections[collect]||=[]
 					collections[collect] << pred
@@ -131,7 +131,7 @@ module Lulz
 			end
 			collections.keys.each do |c|
 				ps="[#{c.to_s.upcase}] =>\n"
-				options=collections[c].first.class.collect_as_options
+				options=collections[c].first.options.merge(collections[c].first.class.collect_as_options)
 				unless options[:order_by].nil?
 					collections[c].sort!{|a,b| a.object.send(options[:order_by]) <=> b.object.send(options[:order_by])}.reverse!
 					collections[c].reverse! if options[:reverse]

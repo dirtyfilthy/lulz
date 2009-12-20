@@ -81,6 +81,7 @@ module Lulz
 
 
 		def _predicate(options)
+			options=options.clone
 			raise RuntimeError, "World is uninitialised! #{self.inspect}" if self._world.nil?
 			p=Lulz::Predicate.new
 			p.subject=self
@@ -90,6 +91,12 @@ module Lulz
 			p.creator=options[:creator]
 			p.probability=options[:probability]
 			p.type=options[:type]
+			options.delete :object
+			options.delete :name
+			options.delete :creator
+			options.delete :probability
+			options.delete :type
+			p.options=options
 			p1=self._world.add_predicate p
 			return p1
 		end

@@ -18,6 +18,7 @@ module Lulz
 		attr_accessor :tested_agents 
 		attr_accessor :clique
 		attr_writer :nomatch
+		attr_accessor :options
 		@@idz=0
 		@@id_mutex=Monitor.new
 		@@cliq_mutex=Monitor.new
@@ -29,6 +30,11 @@ module Lulz
 
 		def nomatch?
 			return @nomatch
+		end
+
+		def top_profile
+			return subject if subject.is_a? Profile or subject.nil?
+			return subject.top_profile
 		end
 
 		def runnable_by?(agent)

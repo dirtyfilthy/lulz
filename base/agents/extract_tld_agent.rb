@@ -5,6 +5,7 @@ module Lulz
 		transformer
 		set_description "extract a two letter tld from country, email, or url"
 		def self.accepts?(pred)
+			return false if pred.name==:external_link
 			return false unless pred.object.is_a?(Country) or pred.object.is_a?(EmailAddress) or pred.object.is_a?(URI)
 			return false unless pred.subject.is_a?(Profile)
 			return false if pred.object.is_a?(URI) and pred.object.host =~ /(identi\.ca|last\.fm)$/
@@ -28,7 +29,7 @@ module Lulz
 			end
 			return if tld.nil?
 			tld=tld.downcase
-			pred2=brute_inference_once pred.subject, :extracted_tld, tld
+			pred2=brute_inference pred.subject, :extracted_tld, tld
 			set_clique(pred,pred2) unless pred2.nil?
 		end
 

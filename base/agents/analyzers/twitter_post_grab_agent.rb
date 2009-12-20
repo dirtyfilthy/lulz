@@ -37,7 +37,7 @@ module Lulz
 					twitter_post.posted_at=DateTime.parse(post.xpath("created_at").text)
 					twitter_post.source=post.xpath("source").text
 					twitter_post.in_reply_to=post.xpath("in_reply_to_screen_name").text
-					twitter_post.contents=post.xpath("text").text
+					twitter_post.contents=post.xpath("text").inner_html
 					brute_fact_nomatch subject, :post, twitter_post
 				end
 				page=page+1

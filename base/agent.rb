@@ -183,7 +183,7 @@ module Lulz
 		end
 
 		def is_processed?(object)
-			return Agent.is_processed?(object)
+			return self.class.is_processed?(object)
 		end
 
 		def self.is_processed?(object)
@@ -211,57 +211,58 @@ module Lulz
 		end
 
 
-		def brute_fact_nomatch(subject,predicate,object)
-			pred=brute_fact subject,predicate,object
+		def brute_fact_nomatch(subject,predicate,object,options={})
+			pred=brute_fact subject,predicate,object,options
 			unless pred.nil?
 				pred.nomatch=true
 			end
 			return pred
 		end
 
-		def brute_fact(subject,predicate,object)
+		def brute_fact(subject,predicate,object,options={})
 			subject=normalize(subject)
 			object=normalize(object)
-			pred=subject._predicate(:object => object, :name => predicate, :probability => P_TRUE, :creator => self, :type => :brute_fact)
+
+			pred=subject._predicate(options.clone.merge({:object => object, :name => predicate, :probability => P_TRUE, :creator => self, :type => :brute_fact}))
 			@produced_predicates << pred unless pred.nil?
 
 			return pred
 		end
 
-		def brute_fact_once(subject,predicate,object)
+		def brute_fact_once(subject,predicate,object,options={})
 			subject=normalize(subject)
 			object=normalize(object)
 
 			return nil if predicate_exists?(subject,predicate)
-			pred=brute_fact(subject,predicate,object)
+			pred=brute_fact(subject,predicate,object,options)
 			return pred
 		end
 
-		def single_fact_once(subject,predicate,object)
+		def single_fact_once(subject,predicate,object,options={})
 			subject=normalize(subject)
 			object=normalize(object)
 
 
 			return nil if predicate_exists?(subject,predicate)
-			single_fact(subject,predicate,object)
+			single_fact(subject,predicate,object,options)
 		end
 
-		def brute_inference_once(subject,predicate,object)
+		def brute_inference_once(subject,predicate,object,options={})
 			subject=normalize(subject)
 			object=normalize(object)
 
-			return nil if predicate_exists?(subject,predicate)
-			brute_inference(subject,predicate,object)
+			return nil if predicate_exists?(subject,predicate={})
+			brute_inference(subject,predicate,object,options)
 		end
 
 
 
-		def single_fact(subject,predicate,object)
+		def single_fact(subject,predicate,object,options={})
 			subject=normalize(subject)
 			object=normalize(object)
 
-
-			pred=subject._predicate(:object => object, :name => predicate, :probability => P_TRUE, :creator => self, :type => :single_fact)
+		
+			pred=subject._predicate(options.clone.merge({:object => object, :name => predicate, :probability => P_TRUE, :creator => self, :type => :single_fact}))
 			@produced_predicates << pred unless pred.nil?
 			return pred
 
@@ -269,12 +270,12 @@ module Lulz
 		
 
 
-		def brute_inference(subject,predicate,object)
+		def brute_inference(subject,predicate,object, options={})
 			subject=normalize(subject)
 			object=normalize(object)
 
+			pred=subject._predicate(options.clone.merge({:object => object, :name => predicate, :probability => P_TRUE, :creator => self, :type => :brute_inference}))
 
-			pred=subject._predicate(:object => object, :name => predicate, :probability => P_TRUE, :creator => self, :type => :brute_inference)
 			@produced_predicates << pred unless pred.nil?
 			return pred
 
