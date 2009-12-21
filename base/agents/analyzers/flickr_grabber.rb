@@ -19,11 +19,13 @@ module Lulz
 
 			results=500
 			photos=[]
+			page=1
 			while(results==500)
-				r=flickr.people.getPublicPhotos(:user_id => user_id, :extras => "license, date_upload, date_taken, owner_name, icon_server, original_format, last_update, geo, tags, machine_tags, o_dims, views, media, path_alias, url_sq, url_t, url_s, url_m, url_o",:per_page => 500, :page => 1)
+				r=flickr.people.getPublicPhotos(:user_id => user_id, :extras => "license, date_upload, date_taken, owner_name, icon_server, original_format, last_update, geo, tags, machine_tags, o_dims, views, media, path_alias, url_sq, url_t, url_s, url_m, url_o",:per_page => 500, :page => page)
 				activity
 				results=r.count
 				photos=photos+r
+				page=page+1
 			end
 			noexif=false
 			photos.each do |photo|
@@ -33,6 +35,8 @@ module Lulz
 				fp.tags=photo.tags
 				fp.date_taken=photo.datetaken
 				fp.date_uploaded=photo.dateupload
+				fp.url=photo.url_o if photo.url_o
+				fp.url=photo.url_m if fp.url.blank?
 				brute_fact_nomatch fp, :title, photo.title
 				info=flickr.photos.getInfo(:photo_id=>fp.photo_id)
 				activity
@@ -40,6 +44,10 @@ module Lulz
 				info.notes.each do |note|
 					brute_fact_nomatch fp, :note, note.to_s
 				end
+
+				# TODO: add in exif support
+
+				noexif=true
 				begin
 					unless noexif
 						exif=flickr.photos.getExif(:photo_id=>fp.photo_id)
