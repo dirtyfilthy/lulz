@@ -4,7 +4,7 @@ module Lulz
 		
 		properties :photo_id, :tags, :latitude, :longitude, :date_taken, :date_uploaded, :url
 		equality_on :photo_id
-		
+		archive_only		
 
       def initialize(photo_id)
          self.photo_id=photo_id

@@ -89,6 +89,7 @@ module Lulz
 					url="http://#{url}" unless url =~ /^http/
 					u=URI.parse(url)
 
+					options[:analyze_url]=url
 					expander=Lulz::ExpanderAgent.new(Lulz::World.instance)
 
 					expander.expand(u)
@@ -412,7 +413,7 @@ module Lulz
 					obj._predicates.each do |predicate|
 						
 						next if predicate.object.class.archive_only? and !Blackboard.instance.options[:archive]
-						collect=predicate.object.class.collect_as_property
+						collect=(predicate.object.class.collect_as_property or predicate.options[:collect_as])
 						unless collect.nil?
 							collections[collect]||=[]
 							collections[collect] << predicate

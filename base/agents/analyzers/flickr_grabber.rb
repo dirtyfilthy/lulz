@@ -20,6 +20,13 @@ module Lulz
 			results=500
 			photos=[]
 			page=1
+			groups=flickr.people.getPublicGroups(:user_id => user_id)
+			groups.each do |group|
+				g=group.name
+				g << " (admin)" if group.admin!=0
+				g << " (18+)" if group.eighteenplus!=0
+				brute_fact_nomatch subject, :flickr_group, g, :collect_as => :flickr_groups
+			end
 			while(results==500)
 				r=flickr.people.getPublicPhotos(:user_id => user_id, :extras => "license, date_upload, date_taken, owner_name, icon_server, original_format, last_update, geo, tags, machine_tags, o_dims, views, media, path_alias, url_sq, url_t, url_s, url_m, url_o",:per_page => 500, :page => page)
 				activity
@@ -29,24 +36,26 @@ module Lulz
 			end
 			noexif=false
 			photos.each do |photo|
+				pp photo
 				fp=FlickrPhoto.new(photo.id)
 				fp.longitude=photo.longitude
 				fp.latitude=photo.latitude
 				fp.tags=photo.tags
 				fp.date_taken=photo.datetaken
 				fp.date_uploaded=photo.dateupload
-				fp.url=photo.url_o if photo.url_o
-				fp.url=photo.url_m if fp.url.blank?
+				fp.url=photo.url_o if photo.respond_to? :url_o
+				fp.url=photo.url_m if fp.url.blank? and photo.respond_to? :url_m
 				brute_fact_nomatch fp, :title, photo.title
-				info=flickr.photos.getInfo(:photo_id=>fp.photo_id)
-				activity
-				brute_fact_nomatch fp, :description, info.description
-				info.notes.each do |note|
+				if archive?
+					info=flickr.photos.getInfo(:photo_id=>fp.photo_id)
+					activity
+					brute_fact_nomatch fp, :description, info.description
+					info.notes.each do |note|
 					brute_fact_nomatch fp, :note, note.to_s
+					end
+
+					# TODO: add in exif support
 				end
-
-				# TODO: add in exif support
-
 				noexif=true
 				begin
 					unless noexif

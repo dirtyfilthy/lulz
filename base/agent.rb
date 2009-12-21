@@ -28,6 +28,10 @@ module Lulz
 			@status="N"
 		end
 
+		def archive?
+			Blackboard.instance.options[:archive]
+		end
+
 		def activity
 			Blackboard.instance.status(">")
 		end
