@@ -231,7 +231,6 @@ CODE
 		end
 
 CODE
-	
 	module_eval(code)
 
 	end
