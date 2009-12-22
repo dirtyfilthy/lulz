@@ -2,14 +2,20 @@ lulz v0.02 INSTALLATION INSTRUCTIONS
 
 You can use lulz with ruby1.8.x or ruby 1.9.1, 1.9.0 will not work. 
 
-Release 0.02 breaks compatibility with the old database, you'll need to use the new lulz.sqlite3 file. 
+Release 0.02 breaks compatibility with the old database, you'll need to use the 
+new lulz.sqlite3 file. 
 
 AS ROOT
 
-# apt-get install ruby1.8 ruby1.8-dev rubygems libsqlite3-dev libxml2-dev libxslt1-dev libopenssl-ruby libgmp3-dev 
-# gem install mechanize mofo hpricot nokogiri json sqlite3-ruby hoe activerecord flickraw
+# apt-get install ruby1.8 ruby1.8-dev rubygems libsqlite3-dev libxml2-dev \
+libxslt1-dev libopenssl-ruby libgmp3-dev 
 
-The stable version of debian does not come with a recent enough version of libsqlite3-dev, if you are installing under debian stable either use the unstable package or compile from source yourself. 
+# gem install mechanize mofo hpricot nokogiri json sqlite3-ruby hoe \
+activerecord flickraw
+
+The stable version of debian does not come with a recent enough version of 
+libsqlite3-dev, if you are installing under debian stable either use the 
+unstable package or compile from source yourself. 
 
 then from lulz root dir (as any user)
 
