@@ -7,7 +7,7 @@ Release 0.02 breaks compatibility with the old database, you'll need to use the 
 AS ROOT
 
 # apt-get install ruby1.8 ruby1.8-dev rubygems libsqlite3-dev libxml2-dev libxslt1-dev libopenssl-ruby libgmp3-dev 
-# gem install mechanize mofo hpricot nokogiri json sqlite3-ruby hoe activerecord
+# gem install mechanize mofo hpricot nokogiri json sqlite3-ruby hoe activerecord flickraw
 
 The stable version of debian does not come with a recent enough version of libsqlite3-dev, if you are installing under debian stable either use the unstable package or compile from source yourself. 
 
