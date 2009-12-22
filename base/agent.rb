@@ -28,6 +28,13 @@ module Lulz
 			@status="N"
 		end
 
+		def archive?
+			Blackboard.instance.options[:archive]
+		end
+
+		def activity
+			Blackboard.instance.status(">")
+		end
 
 		def set_clique(pred1,pred2)
 			Predicate.set_clique(pred1,pred2)
@@ -54,6 +61,7 @@ module Lulz
 				puts "#{a.status} #{a.class.to_s} (#{a.time_running_secs} secs)"
 			end
 		end
+
 
 		def self.recalc_queue
 			return @@recalc_queue

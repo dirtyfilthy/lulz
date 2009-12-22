@@ -19,7 +19,7 @@ module Lulz
 			p=self.properties_to_h
 			s=""
 			s="#{p.inspect} " unless p=={}
-			s=s+self.to_s
+			s="#{s}"+"#{self.to_s}"
 		end
 
 		def _lulz_unclean?
