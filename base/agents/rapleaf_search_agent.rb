@@ -34,9 +34,9 @@ module Lulz
 
 			doc=REXML::Document.new xml			
 			brute_fact rapleaf_profile, :email, email
-			brute_fact rapleaf_profile, :sex, Sex.new(doc.elements["person/basics/gender"].text) rescue nil
-			brute_fact rapleaf_profile, :age, Age.new(doc.elements["person/basics/age"].text) rescue nil
-			brute_fact rapleaf_profile, :name, Name.new(doc.elements["person/basics/name"].text) rescue nil
+			single_fact rapleaf_profile, :sex, Sex.new(doc.elements["person/basics/gender"].text) rescue nil
+			single_fact rapleaf_profile, :age, Age.new(doc.elements["person/basics/age"].text) rescue nil
+			single_fact rapleaf_profile, :name, Name.new(doc.elements["person/basics/name"].text) rescue nil
 			brute_fact rapleaf_profile, :earliest_activity, doc.elements["person/basics/earliest_known_activity"].text rescue nil
 			brute_fact rapleaf_profile, :last_activity, doc.elements["person/basics/latest_known_activity"].text rescue nil
 			doc.elements.each("person/basics/occupations/occupation") do |o| 

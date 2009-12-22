@@ -1,4 +1,3 @@
-require "#{LULZ_DIR}/lib/algorithms.rb"
 module Lulz
 	class ActionQueue
 		
@@ -7,7 +6,6 @@ module Lulz
 			@list=[]
 			@keys={}
 			block ||= lambda { |x, y| (x <=> y) == 1 }
-			@heap = Containers::Heap.new(&block)
 			@mutex=Mutex.new
 			@dirty_preds=[]
 			@score_cache={}
@@ -40,7 +38,7 @@ module Lulz
 			@rel_cache={}
 			to_add=[]
 			return if dirty_copy.empty?
-			agents=Agent.agents-Agent.transformer_agents-Blackboard.instance.options[:disabled_agents]
+			agents=Agent.agents-Agent.transformer_agents-Blackboard.instance.options[:disabled_agents]-Agent.analyzer_agents
 			st=0.0
 			ht=0.0
 			dirty_copy.each do |pred|
@@ -94,7 +92,14 @@ module Lulz
 				@score_cache[h]||={}
 				score=@score_cache[h][agent] if @score_cache[h].key?(agent)
 				score=-1 if @rel_cache[predicate.subject]<0.2
-				sc=predicate.to_chain.markov_chain_scores.find_by_agent_id(ObjectType.cache_find_or_create_by_name(agent.to_s).id) if score.nil?
+				begin
+					sc=predicate.to_chain.markov_chain_scores.find_by_agent_id(ObjectType.cache_find_or_create_by_name(agent.to_s).id) if score.nil?
+				rescue ActiveRecord::StatementInvalid
+					sleep 0.1
+					retry
+				end
+
+
 				score=20*@rel_cache[predicate.subject] if score.nil? and (sc.nil? or sc.count<20)
 				score=sc.score if score.nil?
 				@score_cache[h][agent]=score

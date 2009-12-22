@@ -43,7 +43,7 @@ module Lulz
           lo=Locality.new(whois["#{prefix}_contact_city"])
           em=EmailAddress.new(whois["#{prefix}_contact_email"])
           pn=PhoneNumber.new(whois["#{prefix}_contact_phone"])
-          brute_fact p,:name,nm
+          single_fact p,:name,nm
           single_fact p,:country,cn
           brute_fact p,:email,em
           brute_fact p,:phone_number,pn

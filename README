@@ -1,24 +1,58 @@
-Lulz is an advanced search engine for people. You're smart, you'll figure it out. 
-
 Lulz is distributed under the http://creativecommons.org/licenses/by-nc-sa/3.0/ licence.
 
 THIS IS VERY ALPHA SOFTWARE, lots of bugs, bad code, etc. Feedback, bug reports and suggestions gratefully accepted at dirtyfilthee@gmail.com
 
-At the moment lulz is very untrained, i recommend using a timeout, i.e. --timeout 420. The timeout only prevents lulz from running new agents, it will still finish transforming and processing the profile queue. Also the output can be quite long, might be an idea to redirect output to a file. You can slim this output down by setting a high match value, say -m 0.8 
+More information, latest releases etc available at http://www.dirtyfilthy.net/projects/lulz
 
+#####################
+## Introduction
+#########################
 
+Lulz is a webstalking engine & command-line tool for fast online personal reconnaissance: searching, collating and analyzing public online profiles.
 
-For usage info ./lulz -h 
+Lulz is a webstalking engine that tries to search for information about a particular person online in a similar fashion to the way a human being would do it, that is, by finding, evaluating and utilising information. When you webstalk someone you typically take what you know and try to transform this knowledge into more data, using a variety of methods (such as search engines) and tricks (such as social network account enumeration via email). You then evaluate the information (is this who I'm looking for?) and if so lather, rinse, repeat. 
 
-Example search:
+Lulz uses Bayesian identity resolution to determine if person A and person B are the same person, an agent architecture to utilise the information it finds, and a blackboard architecture to share information amongst these agents. Lulz uses a Markov Decision Process to decide what to do next. 
 
-./lulz --alias dirtyfilthy --sex m --country nz --city christchurch --homepage www.dirtyfilthy.net --summary -m 0.8 --timeout 240
+#######################
+## Usage
+##########################
 
-Status Key:
+For usage info ./lulz -h
 
-.	- running transformer
-=	- running parser
-*	- running search
+At the moment lulz is very untrained, i recommend using a timeout, i.e. --timeout 420. The timeout only prevents lulz from running new agents, it will still finish transforming and processing the profile queue. Use --hard-timeout to stop all processing at a certain point. Also the output can be quite long, might be an idea to redirect output to a file. You can slim this output down by setting a high match value, say -m 0.8
+
+The more information you enter at the start, the better lulz works, but also: garbage in, garbage out. Entering incorrect information will definitely reduce effectiveness and may easily produce nonsense. Keywords sometimes help greatly in distinguishing between profiles, i.e. if your target works in the computer security industry use --keyword computer --keyword security
+ 
+#######################
+## Example search      
+##########################
+
+./lulz --alias dirtyfilthy --sex m --country nz --city christchurch --homepage www.dirtyfilthy.net --summary -m 0.8 --timeout 240 --hard-timeout 500
+
+#######################
+## Analysis Examples
+##########################
+
+./lulz --analyze twitter.com/dirtyfilthy
+
+Analyze this twitter account
+
+./lulz -r --analyze twitter.com/dirtyfilthy
+
+Analyze this twitter account & dump posts (archive)
+
+./lulz -X -r --analyze twitter.com/dirtyfilthy
+
+Analyze this twitter account & dump everything in xml
+
+#######################
+## Status key
+##########################
+
+.		- running transformer
+=		- running parser
+*		- running search
 ?  	- performing identity resolution
 !  	- recalculating action queue
 W  	- queue empty, waiting

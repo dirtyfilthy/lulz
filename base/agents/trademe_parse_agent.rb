@@ -21,15 +21,15 @@ module Lulz
 	 html=page.body
          
          trademe_profile=TrademeProfile.new
-         trademe_profile.member_id=member_id
+         trademe_profile.member_id=member_id.first.first
          brute_fact trademe_profile, :profile_url, url
 	 alias_match=page.root.css("h3 a b").text
          alias_o=Alias.new(alias_match) rescue nil
-	 brute_fact trademe_profile, :alias, alias_o
+	 brute_fact trademe_profile, :username, alias_o
 	 name=html.scan(/<b>Name:<\/b><\/small><\/td><td>(.*?)<\/td>/).first.first rescue nil
 	 since=html.scan(/<b>Member Since:<\/b><\/small><\/td><td>(.*?)<\/td>/).first.first rescue nil 
 	 suburb=html.scan(/<b>Suburb:<\/b><\/small><\/td><td>(.*?)<\/td>/).first.first rescue nil
-	 brute_fact trademe_profile, :name, Name.new(name)
+	 single_fact trademe_profile, :name, Name.new(name)
 	 brute_fact trademe_profile, :locality, Locality.new(suburb)
 	 brute_fact trademe_profile, :member_since, since
 	 single_fact trademe_profile, :country, Country.new("nz")

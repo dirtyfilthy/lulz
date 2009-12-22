@@ -1,8 +1,7 @@
 $: << File.dirname( __FILE__) 
-
+$: << LULZ_DIR
 require 'rubygems' if Lulz::USE_CLI
 require 'web/setup.rb' unless Lulz::USE_CLI
-require 'lib/text'
 require 'mechanize'
 require 'logger'
 require 'active_record'
@@ -28,7 +27,7 @@ require "base/models/markov_agent_run_profile.rb"
 require "base/models/markov_produced_predicate.rb"
 require "base/cli.rb" if Lulz::USE_CLI
 require "base/resources.rb"
-IdentityBayes.set_database(SQLITE3_DB);
+
 
 module Lulz
 	ERROR_LOG=Logger.new "#{LULZ_DIR}/log/error.log"
@@ -63,9 +62,13 @@ end
 # require base datatypes
 Dir.glob("#{LULZ_DIR}/base/datatypes/*.rb").each {|f| require f }
 Dir.glob("#{LULZ_DIR}/base/datatypes/profiles/*.rb").each {|f| require f }
+Dir.glob("#{LULZ_DIR}/base/datatypes/analysis/*.rb").each {|f| require f }
 # require base agents
 Lulz::start_db
+
 Dir.glob("#{LULZ_DIR}/base/agents/*.rb").each {|f| require f }
+
+Dir.glob("#{LULZ_DIR}/base/agents/analyzers/*.rb").each {|f| require f }
 b=Lulz::Blackboard.instance
 unless Lulz::USE_CLI
 	p=Lulz::Person.new
@@ -83,7 +86,9 @@ else
 		Lulz::CLI::to_xml
 		exit
 	end
+	puts
 	Lulz::CLI::summary(b) if b.options[:summary]
+	puts if b.options[:summary]
 	b.profiles.clone.sort{|a,b2| a.person_id <=> b2.person_id}.each { |p| 
 		next if matches[p].nil? or matches[p]<b.options[:match_threshold]; 
 		
@@ -102,5 +107,6 @@ else
 		i=i+1
 	end
 	Lulz::CLI::ask_matches(b) if b.options[:match_mode]
+	Lulz::World.instance.save if b.options[:match_mode]
 end
 

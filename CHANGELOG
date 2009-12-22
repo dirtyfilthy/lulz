@@ -1,0 +1,19 @@
+0.0.2 (23/12/09)	simplified predicate cutout to cut down on statespace size
+			lots more caching in identity bayes (much faster)
+			facebook public profile parser
+			ruby1.9.1 compatibility
+			moved hresume & hcard parser from mofo to nokogiri
+			fixed bug with active_record connection pool exhaustion
+			name is now single_fact
+			world now saved in match mode
+			fix for order_predicates acting randomly
+			added analysis framework:
+				twitter grabber
+				trademe grabber 
+				myspace blog grabber
+				flickr grabber
+				blog post zeitgeist
+				blog posts by hour
+				extract external links
+
+0.0.2 (09/12/09)	initial release

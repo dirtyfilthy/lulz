@@ -18,7 +18,7 @@ module Lulz
 			web=Agent.get_web_agent
          page=web.get(url)
          html=page.body
-         
+			 
          alias_match=html.scan(/<link rel="canonical" href="http:\/\/www.myspace.com\/([a-z0-9_-]+)/).first.first rescue nil
          
 			#name,alias2=html.scan(/([a-zA-Z0-9_-]+) \(([a-zA-Z0-9`'_- ]+)\) \| MySpace/).first rescue [nil, nil]    
@@ -29,7 +29,8 @@ module Lulz
          set_processed url         
          myspace_profile=MyspaceProfile.new
          myspace_profile.url=canonical_url
-         brute_fact myspace_profile, :profile_url, canonical_url
+         myspace_profile.html_page=html
+			brute_fact myspace_profile, :profile_url, canonical_url
          alias_o=Alias.new(alias_match) rescue nil
 	      sex, age, region, country = html.scan(/(Male|Female).*?<br.*?>(\d+) years old.*?<br.*?>(.*?)<br.*?>(.*?)<br.*?>/mi)[0]
          if country.blank?
@@ -45,16 +46,18 @@ module Lulz
 	    age=html.scan(/<span class="age">(.*?)<\/span>/).first.to_s rescue nil?
 	 end
 	 if age.blank?
-	    age=html.scan(/(\d+) years old/i).first.to_s rescue nil
+	    age=html.scan(/(\d+) years old/i).first.first.to_s rescue nil
 	 end
-	 region=html.scan(/<span class="region">(.*?)<\/span>/).first.to_s if region.blank? 	 
-         age=Age.new(age)
+	 if region.blank?
+		region=html.scan(/<span class="region">(.*?)<\/span>/).first.first.to_s rescue nil
+	 end     
+		age=Age.new(age)
          sex=Sex.new(sex)
 	      country=Country.new(country)
 	      locality=Locality.new(region)
 	      same_owner url,myspace_profile
          single_fact myspace_profile, :sex, sex
-			brute_fact myspace_profile, :name, Name.new(name)
+			single_fact myspace_profile, :name, Name.new(name)
 			single_fact myspace_profile, :alias, Alias.new(alias2) if alias_match!=alias2
          single_fact myspace_profile, :age, age
          brute_fact myspace_profile, :username, alias_o 

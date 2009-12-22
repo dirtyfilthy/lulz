@@ -13,16 +13,13 @@ CREATE TABLE predicate_cutouts (
 	object_type_id INTEGER,
 	subject_type_id INTEGER,
 	relationship_id INTEGER,
-	created_by_id INTEGER,
-	last_profile_object_type_id INTEGER,
-	last_search_agent_type_id INTEGER
+	created_by_id INTEGER
 );
 
 CREATE INDEX object_type_index ON predicate_cutouts (object_type_id);
 CREATE INDEX created_by_index ON predicate_cutouts (created_by_id);
 CREATE INDEX subject_type_index ON predicate_cutouts (subject_type_id);
 CREATE INDEX relationship_index ON predicate_cutouts (relationship_id);
-CREATE INDEX last_profile_object_type_index ON predicate_cutouts (last_profile_object_type_id);
 
 CREATE TABLE evidence (
 	id INTEGER PRIMARY KEY,
@@ -30,16 +27,15 @@ CREATE TABLE evidence (
 	pred_2 INTEGER,
 	same INTEGER,
 	different INTEGER,
-	match_type INTEGER,
-        single_fact INTEGER	
+	match_type INTEGER
 );
 
 CREATE INDEX evidence_pred_1 ON evidence (pred_1);
 CREATE INDEX evidence_pred_2 ON evidence (pred_2);
 CREATE INDEX evidence_match_type ON evidence (match_type);
-CREATE INDEX evidence_single_fact ON evidence (single_fact);
 
 INSERT INTO evidence (id,same,different) VALUES (-978,1,100);
+INSERT INTO evidence (id,same,different) VALUES (-979,100,100);
 INSERT INTO evidence (id,same,different) VALUES (0,0,0);
 
 CREATE TABLE markov_agent_times (
@@ -109,7 +105,6 @@ CREATE INDEX run_profiles_chain_id ON markov_agent_run_profiles (markov_predicat
 CREATE INDEX run_profiles_agent_id ON  markov_agent_run_profiles (agent_id);
 CREATE UNIQUE INDEX run_profiles_both ON  markov_agent_run_profiles (markov_predicate_chain_id,agent_id);
 CREATE INDEX markov_all ON markov_predicate_chains(pred_1_id,pred_2_id,relevance);
-CREATE INDEX predicate_chains_pred_all ON markov_predicate_chains (pred_1_id,pred_2_id,pred_3_id,pred_4_id);
 CREATE INDEX markov_produced_object_chain_id ON markov_produced_objects (markov_predicate_chain_id);
 CREATE INDEX markov_produced_predicates_object_id ON markov_produced_predicates (markov_produced_object_id); 
 CREATE INDEX evidence_both ON evidence(pred_1,pred_2);

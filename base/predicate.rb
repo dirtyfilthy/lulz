@@ -17,6 +17,8 @@ module Lulz
 		attr_accessor :ran_by
 		attr_accessor :tested_agents 
 		attr_accessor :clique
+		attr_writer :nomatch
+		attr_accessor :options
 		@@idz=0
 		@@id_mutex=Monitor.new
 		@@cliq_mutex=Monitor.new
@@ -24,8 +26,20 @@ module Lulz
 		@@all_predicates={}
 		@@clique_hash={}
 
+		alias :relationship :name
+
+		def nomatch?
+			return @nomatch
+		end
+
+		def top_profile
+			return subject if subject.is_a? Profile or subject.nil?
+			return created_from.last.top_profile if created_from.last
+			return nil
+		end
+
 		def runnable_by?(agent)
-			self.tested_agents << agent unless self.tested_agents.include?(agent) or agent.too_many_agents?
+			self.tested_agents << agent.to_s unless self.tested_agents.include?(agent.to_s) or agent.too_many_agents?
 			return agent.accepts?(self)
 		end
 		def self.new_clique
@@ -84,6 +98,8 @@ module Lulz
 			@ran_by=[]
 			@clique=0
 			@tested_agents=[]
+			@user_match=false
+			@nomatch=false
 		end
 
 		def expand
@@ -206,7 +222,7 @@ module Lulz
 		end
 
 		def short_s
-			"#{subject.class.to_s}:#{subject.to_s} #{name.to_s} #{object.class.to_s}:#{object.to_s}" 
+			"#{subject.class.to_s}:#{subject.to_s} #{name.to_s} #{object.class.to_s}:#{object.to_s} #{object.equality_s}" 
 		end
 
 		def shortest_s

@@ -4,21 +4,36 @@ module Lulz
 		attr_reader :produced_predicates
 		attr_accessor :produced_matches
 		attr_reader :from_predicate
+		attr_reader :status
 		@@agents=[]
 		@@transformer_agents=[]
 		@@searcher_agents=[]
 		@@parser_agents=[]
 		@@recalc_queue=[]
+		@@analyzer_agents=[]
 		@@personal_info_mutex=Mutex.new	
 		@@running_agents={}
 		@@process_mutex=Mutex.new
+		@@never_value=0
+
+
 		
+
 		def initialize(world)
 			self._world=world
 			@produced_predicates=[]
 			@produced_matches=0
 			@start_time=nil
 			@end_time=nil
+			@status="N"
+		end
+
+		def archive?
+			Blackboard.instance.options[:archive]
+		end
+
+		def activity
+			Blackboard.instance.status(">")
 		end
 
 		def set_clique(pred1,pred2)
@@ -26,17 +41,27 @@ module Lulz
 		end	
 
 		def self.running_agents
-			stopped=@@running_agents.keys.select { |agent| (@@running_agents[agent].nil? or !@@running_agents[agent].alive?)}
+			stopped=@@running_agents.keys.select { |agent| 
+				dead=!@@running_agents[agent].alive? rescue true
+				dead
+			}
 			stopped.each { |dead| @@running_agents.delete(dead) }
 			return @@running_agents
 		end
 
+		def self.kill_all
+			self.running_agents.values do |a|
+				a.kill rescue nil
+			end
+		end
+		
 		def self.list_agents
 			self.running_agents.keys.each do |a| 
 
-				puts "#{a.class.to_s} (#{a.time_running_secs} secs)"
+				puts "#{a.status} #{a.class.to_s} (#{a.time_running_secs} secs)"
 			end
 		end
+
 
 		def self.recalc_queue
 			return @@recalc_queue
@@ -45,7 +70,6 @@ module Lulz
 		def self.run_inline(pred)
 			a=self.new(World.instance)
 			p=pred
-		  	
 				a.set_processed(pred)
 				begin
 					Blackboard.instance.status_agent(self)
@@ -85,6 +109,7 @@ module Lulz
 				b.created_predicates[p]||=[]
 				b.created_predicates[p]<<a
 				@@running_agents.delete(a)
+				ActiveRecord::Base.clear_active_connections!
 			}
 
 			@@running_agents[agent]=thread
@@ -97,7 +122,7 @@ module Lulz
 		end
 
 		def run(pred)
-
+			@status="R"
 			@from_predicate=pred
 			@start_time=Time.now
 			@from_predicate.ran_by << self
@@ -146,6 +171,10 @@ module Lulz
 			false
 		end
 
+		def self.analyzer?
+			false
+		end
+
 
 		def self.personal_info_mutex
 			@@personal_info_mutex
@@ -162,7 +191,7 @@ module Lulz
 		end
 
 		def is_processed?(object)
-			return Agent.is_processed?(object)
+			return self.class.is_processed?(object)
 		end
 
 		def self.is_processed?(object)
@@ -190,49 +219,58 @@ module Lulz
 		end
 
 
-		def brute_fact(subject,predicate,object)
+		def brute_fact_nomatch(subject,predicate,object,options={})
+			pred=brute_fact subject,predicate,object,options
+			unless pred.nil?
+				pred.nomatch=true
+			end
+			return pred
+		end
+
+		def brute_fact(subject,predicate,object,options={})
 			subject=normalize(subject)
 			object=normalize(object)
-			pred=subject._predicate(:object => object, :name => predicate, :probability => P_TRUE, :creator => self, :type => :brute_fact)
+
+			pred=subject._predicate(options.clone.merge({:object => object, :name => predicate, :probability => P_TRUE, :creator => self, :type => :brute_fact}))
 			@produced_predicates << pred unless pred.nil?
 
 			return pred
 		end
 
-		def brute_fact_once(subject,predicate,object)
+		def brute_fact_once(subject,predicate,object,options={})
 			subject=normalize(subject)
 			object=normalize(object)
 
 			return nil if predicate_exists?(subject,predicate)
-			pred=brute_fact(subject,predicate,object)
+			pred=brute_fact(subject,predicate,object,options)
 			return pred
 		end
 
-		def single_fact_once(subject,predicate,object)
+		def single_fact_once(subject,predicate,object,options={})
 			subject=normalize(subject)
 			object=normalize(object)
 
 
 			return nil if predicate_exists?(subject,predicate)
-			single_fact(subject,predicate,object)
+			single_fact(subject,predicate,object,options)
 		end
 
-		def brute_inference_once(subject,predicate,object)
+		def brute_inference_once(subject,predicate,object,options={})
 			subject=normalize(subject)
 			object=normalize(object)
 
-			return nil if predicate_exists?(subject,predicate)
-			brute_inference(subject,predicate,object)
+			return nil if predicate_exists?(subject,predicate={})
+			brute_inference(subject,predicate,object,options)
 		end
 
 
 
-		def single_fact(subject,predicate,object)
+		def single_fact(subject,predicate,object,options={})
 			subject=normalize(subject)
 			object=normalize(object)
 
-
-			pred=subject._predicate(:object => object, :name => predicate, :probability => P_TRUE, :creator => self, :type => :single_fact)
+		
+			pred=subject._predicate(options.clone.merge({:object => object, :name => predicate, :probability => P_TRUE, :creator => self, :type => :single_fact}))
 			@produced_predicates << pred unless pred.nil?
 			return pred
 
@@ -240,12 +278,12 @@ module Lulz
 		
 
 
-		def brute_inference(subject,predicate,object)
+		def brute_inference(subject,predicate,object, options={})
 			subject=normalize(subject)
 			object=normalize(object)
 
+			pred=subject._predicate(options.clone.merge({:object => object, :name => predicate, :probability => P_TRUE, :creator => self, :type => :brute_inference}))
 
-			pred=subject._predicate(:object => object, :name => predicate, :probability => P_TRUE, :creator => self, :type => :brute_inference)
 			@produced_predicates << pred unless pred.nil?
 			return pred
 
@@ -280,7 +318,7 @@ module Lulz
 					puts e
 					puts e.backtrace.join("\n")
 				end
-				sleep 0.5 unless Agent.running_agents.keys.empty?	
+				# sleep 0.5 unless Agent.running_agents.keys.empty?	
 				@@personal_info_mutex.synchronize {
 					@@recalc_queue.shift
 				}
@@ -288,6 +326,7 @@ module Lulz
 		end
 
 		def process_predicates
+			@status="P"
 			changed_profiles={}
 
 				t=Time.now
@@ -299,35 +338,41 @@ module Lulz
 					@last_profile_object=@from_predicate.object
 
 				end
+
 				@produced_predicates.each do |pred|
 					next if pred.nil?
-					pred.created_from=@from_predicate.created_from.clone.push(@from_predicate)
+					pred.created_from=@from_predicate.created_from.clone.push(@from_predicate) unless @from_predicate.nil?
 					pred.last_profile_object=@last_profile_object
 					pred.last_search_agent=@last_search_agent
-			   end unless @from_predicate.nil?
-			@produced_predicates.each do |pred|
-				next if pred.nil?
-				if pred.subject.is_a? Profile 
+					pred.to_cutout
+					if pred.subject.is_a? Profile 
 						profile=pred.subject
 						changed_profiles[profile]||=[]
 						changed_profiles[profile]<<pred
 					end
-					pred.to_cutout
 					Agent.transformer_agents.each do |ag|
+								
 						ag.run_inline(pred) if pred.runnable_by?(ag)
 					end
 					Blackboard.instance.action_queue.add_dirty_predicate(pred)
 				end
 				changed_profiles.keys.each do |profile|
-					cliqable=[]
+					cliqable={}
+					
+					# autoclique countries, localities and single_facts
+					
 					profile._predicates.each do |pred|
-						cliqable << pred if pred.object.is_a?(Country) or pred.object.is_a?(Locality)
-					
+						key=nil
+						key=:countries if pred.object.is_a?(Country) or pred.object.is_a?(Locality)
+						key=pred.relationship if pred.type==:single_fact
+						cliqable[key] ||= [] unless key.nil?
+						cliqable[key] << pred unless key.nil?
 					end
-					top=cliqable.pop
-					
-					cliqable.each {|c| set_clique top,c } unless top.nil?
-					Agent.enqueue_recalc(profile)
+					cliqable.each_value {|clique|
+						top=clique.pop
+						clique.each {|c| set_clique top,c } unless top.nil?
+					}
+						Agent.enqueue_recalc(profile)
 				end
 		end
 
@@ -348,6 +393,7 @@ module Lulz
 			transformer_agents.push(subclass).uniq! if subclass.transformer?
 			searcher_agents.push(subclass).uniq! if subclass.searcher?
 			parser_agents.push(subclass).uniq! if subclass.parser?
+			analyzer_agents.push(subclass).uniq! if subclass.analyzer?
 		end	
 
 		def self.agents
@@ -367,6 +413,9 @@ module Lulz
 		end
 
 
+		def self.analyzer_agents
+			@@analyzer_agents
+		end
 		def self.get_web_agent()
 			agent= WWW::Mechanize.new
 			#agent.set_proxy("localhost",3128)
@@ -478,6 +527,15 @@ module Lulz
 		end
 
 
+		def self.analyzer
+			class_eval %{
+				def self.analyzer?
+					true
+				end
+
+			}
+			@@analyzer_agents.push(self).uniq!
+		end
 
 		def self.accept_if_subject_method(method, options=[])
 

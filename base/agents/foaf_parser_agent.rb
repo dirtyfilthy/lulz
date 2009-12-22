@@ -15,23 +15,26 @@ module Lulz
 
 
 		def process(pred)
-         url=pred.object
+         
+			url=pred.object
          subject=pred.subject
+			set_processed(url)
 			web=Agent.get_web_agent
          page=web.get(url)
 			xml=page.body
-         doc=REXML::Document.new xml
-         foaf_profile=subject
-         
-         person=doc.root.elements["foaf:Person"]
-			person.elements.each do |element|
+			
+			foaf_profile=subject
+         doc=Nokogiri::XML xml
+			person=doc.xpath("//foaf:Person").first
+			person.children.each do |element|
+				
 				case element.name
                when "nick"
                   a=Lulz::Alias.new(element.text)
                   brute_fact foaf_profile, :username, a
                when "name"
                   n=Lulz::Name.new(element.text)
-                  brute_fact foaf_profile, :name, n
+                  single_fact foaf_profile, :name, n
                when "icqChatID"
                   brute_fact foaf_profile, :icq, element.text
                when "mbox_sha1sum"
@@ -40,29 +43,29 @@ module Lulz
                   e=EmailAddress.new(element.text)
                   brute_fact foaf_profile, :msn, e
                when "openid"
-                  u1=element.attributes["rdf:resource"]
-                  u=URI.parse(u1)
+						u1=element.attributes["resource"] rescue nil
+						u=URI.parse(u1) rescue nil
                   brute_fact u,:openid_url, true
                   brute_fact foaf_profile, :openid,u
                when "homepage"
-                  u1=element.attributes["rdf:resource"]
-                  u=URI.parse(u1)
+						u1=element.attributes["resource"]
+						u=URI.parse(u1) rescue bil
                   brute_fact u,:homepage_url, true
                   brute_fact foaf_profile, :homepage_url,u
                when "weblog"
-                  u1=element.attributes["rdf:resource"]
-                  u=URI.parse(u1)
+                  u1=element.attributes["resource"]
+						u=URI.parse(u1) rescue nil
                   brute_fact u,:blog_url, true
                   brute_fact foaf_profile, :homepage_url,u
 					when "dateOfBirth"
 						b=BirthDate.new(element.text)
 						single_fact foaf_profile,:date_of_birth, b
 					when "country"
-                  u1=element.attributes["dc:title"]
+                  u1=element.attributes["title"]
                   c=Country.new(u1)
                   single_fact foaf_profile, :country, c
                when "city"
-                  u1=element.attributes["dc:title"]
+                  u1=element.attributes["title"]
                   c=Locality.new(u1)
                   single_fact foaf_profile, :city, c
 

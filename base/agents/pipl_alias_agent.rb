@@ -27,7 +27,8 @@ module Lulz
             
             url=CGI::unescape(url)
             url.gsub!(/><b$/,"")
-            brute_fact a, :pipl_search_result, URI.parse(url)
+            url.gsub!(/[ ]+$/,"")
+				brute_fact a, :pipl_search_result, URI.parse(url)
          end
 	 toggle=page.body.scan(/toggle\('(.*?)'\)/).first.first rescue nil
 	 unless toggle.nil?

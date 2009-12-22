@@ -23,7 +23,8 @@ module Lulz
             
             flickr_profile=FlickrProfile.new
             flickr_profile.url=canonical_url
-            flickr_profile.html_page=html
+				flickr_profile.html_page=html
+				flickr_profile.user_id=user
             alias_o=page.search(".nickname").first.content rescue nil
             alias_o=Alias.new(alias_o)
             sex = html.scan(/I'm <strong>(Male|Female)<\/strong>/).first.first rescue nil

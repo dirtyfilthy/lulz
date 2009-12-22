@@ -24,14 +24,14 @@ module Lulz
 	emails.each { |e| set_processed(e) }
          twitters={}
          gmail=Resources.get_gmail_account
-         contacts=GoogleContacts.new(gmail.username,gmail.password)
+			contacts=GoogleContacts.new(gmail.username,gmail.password)
          contacts.delete_all
          sleep 2
 	emails.each { |e| contacts.add(e) }
 	 contacts.refresh
 	 agent=Agent.get_web_agent
          twitter=Resources.get_twitter_account
-         page=agent.get("http://twitter.com/login")
+			page=agent.get("http://twitter.com/login")
          form=page.forms[1]
          form["session[username_or_email]"]=twitter.username
          form["session[password]"]=twitter.password

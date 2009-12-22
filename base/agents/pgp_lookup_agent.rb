@@ -24,11 +24,11 @@ module Lulz
 
 				pgp_profile.key_id=key_id
 				result.each_line do |line|
-					email=line.scan(/&lt;([A-Za-z0-9@.]+)&gt;/).to_s
-					name=line.scan(/([a-zA-Z][^&>]+)&lt;/).to_s
+					email=line.scan(/&lt;([A-Za-z0-9@.]+)&gt;/).first.first rescue nil
+					name=line.scan(/([a-zA-Z][^&>]+)&lt;/).first.first.to_s rescue nil
 					brute_fact pgp_profile, :email, EmailAddress.new(email)
 					set_processed email
-					brute_fact pgp_profile, :name, Name.new(name)
+					single_fact pgp_profile, :name, Name.new(name)
 				end
 			end
 		end

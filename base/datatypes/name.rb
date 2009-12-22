@@ -6,7 +6,7 @@ module Lulz
       def initialize(n=nil)
          @name=n.to_s.downcase.strip
 	 @name.gsub!(".","")
-	 @name.gsub!(/[^a-z ].*?[^a-z ]/,"")
+	 @name.gsub!(/[^a-z0-9 ].*?[^a-z0-9 ]/,"")
       
       end
 

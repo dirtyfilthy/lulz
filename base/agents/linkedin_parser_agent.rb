@@ -25,7 +25,7 @@ module Lulz
 			linkedin_profile.url=url
 			linkedin_profile.user_id=id
 			linkedin_profile.html_page=html
-			industry=html.scan(/<dt>Industry<\/dt>.*?<dd>(.*?)<\/dd>/).to_s.strip
+			industry=html.scan(/<dt>Industry<\/dt>.*?<dd>(.*?)<\/dd>/m).first.first.strip rescue nil
 			brute_fact linkedin_profile, :profile_url, url
 			brute_fact linkedin_profile, :industry, industry	
 			page.root.css(".websites li a").each do |a|
