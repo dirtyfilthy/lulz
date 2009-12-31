@@ -5,6 +5,7 @@ require 'web/setup.rb' unless Lulz::USE_CLI
 require 'mechanize'
 require 'logger'
 require 'active_record'
+require 'lib/Redleaf/lib/redleaf.rb'
 require "base/world.rb"
 require "base/constants.rb"
 require "base/predicate.rb"
