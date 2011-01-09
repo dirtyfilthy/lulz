@@ -731,7 +731,7 @@ void calculate_posterior_probability(mpq_t posterior, mpq_t prior, Evidence *e){
 
 
 static int set_database(char *database){
-	return sqlite3_open_v2(database, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+	return sqlite3_open_v2(database, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, NULL);
 	//sqlite3_open_v2(":memory:", &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, NULL);
 	//loadOrSaveDb(db, database, 0);
 }
