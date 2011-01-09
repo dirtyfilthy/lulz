@@ -417,7 +417,7 @@ module Lulz
 			@@analyzer_agents
 		end
 		def self.get_web_agent()
-			agent= WWW::Mechanize.new
+			agent= Mechanize.new
 			#agent.set_proxy("localhost",3128)
 			return agent
 		end
