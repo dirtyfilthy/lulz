@@ -15,7 +15,7 @@ module Lulz
 			set_processed search_string 
 			return if search_string=="admin" # searching for admin is a bad idea ;)
 			agent=Agent.get_web_agent
-			url="http://wwwkeys.3.us.pgp.net:11371/pks/lookup?op=index&search=#{CGI.escape(search_string)}"
+			url="https://pgp.mit.edu/pks/lookup?op=index&search=#{CGI.escape(search_string)}"
 			page=agent.get(url)
 			results=page.body.scan(/\d\d-\d\d(.*?)(?:pub |<\/pre>)/m).flatten rescue []
 			results.each do |result|
